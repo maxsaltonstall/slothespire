@@ -51,5 +51,6 @@ describe("initialState", () => {
     const b = initialState("same-seed");
     expect(a.meta.runId).toBeTruthy();
     expect(b.meta.runId).toBeTruthy();
+    expect(a.meta.runId).not.toBe(b.meta.runId);
   });
 });
