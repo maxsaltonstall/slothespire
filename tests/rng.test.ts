@@ -1,0 +1,45 @@
+import { describe, it, expect } from "vitest";
+import { mulberry32, parseSeed } from "../src/engine/rng";
+
+describe("mulberry32", () => {
+  it("is deterministic for a given seed", () => {
+    const a = mulberry32(42);
+    const b = mulberry32(42);
+    expect(a()).toBe(b());
+    expect(a()).toBe(b());
+    expect(a()).toBe(b());
+  });
+
+  it("produces different sequences for different seeds", () => {
+    const a = mulberry32(1);
+    const b = mulberry32(2);
+    expect(a()).not.toBe(b());
+  });
+
+  it("produces values in [0, 1)", () => {
+    const r = mulberry32(7);
+    for (let i = 0; i < 100; i++) {
+      const v = r();
+      expect(v).toBeGreaterThanOrEqual(0);
+      expect(v).toBeLessThan(1);
+    }
+  });
+});
+
+describe("parseSeed", () => {
+  it("converts a hex string seed to a number", () => {
+    expect(parseSeed("0x4f3a")).toBe(0x4f3a);
+  });
+
+  it("converts a plain integer-looking string to a number", () => {
+    expect(parseSeed("12345")).toBe(12345);
+  });
+
+  it("hashes a non-numeric string to a stable number", () => {
+    const a = parseSeed("hello");
+    const b = parseSeed("hello");
+    const c = parseSeed("world");
+    expect(a).toBe(b);
+    expect(a).not.toBe(c);
+  });
+});
