@@ -22,18 +22,26 @@ function cardRarity(defId: string): "common" | "uncommon" | "rare" {
   return CARD_RARITY[defId] ?? "common";
 }
 
-export function generateCardReward(state: GameState, count = 3): [Card[], GameState] {
+export function generateCardReward(
+  state: GameState,
+  count = 3,
+  forceRarity?: "common" | "uncommon" | "rare"
+): [Card[], GameState] {
   let s = state;
   const offered: Card[] = [];
   const usedIds = new Set<string>();
 
   for (let i = 0; i < count; i++) {
-    const [r1, ns1] = nextRng(s);
-    s = ns1;
     let targetRarity: "common" | "uncommon" | "rare";
-    if (r1 < 0.6) targetRarity = "common";
-    else if (r1 < 0.9) targetRarity = "uncommon";
-    else targetRarity = "rare";
+    if (forceRarity) {
+      targetRarity = forceRarity;
+    } else {
+      const [r1, ns1] = nextRng(s);
+      s = ns1;
+      if (r1 < 0.6) targetRarity = "common";
+      else if (r1 < 0.9) targetRarity = "uncommon";
+      else targetRarity = "rare";
+    }
 
     let candidates = REWARD_POOL.filter(d => cardRarity(d.id) === targetRarity && !usedIds.has(d.id));
     if (candidates.length === 0) {

@@ -8,7 +8,7 @@ import type { Intent, StatusId } from "./state";
 import { buildActMap } from "./map";
 import { nextRng } from "./rng";
 import { EVENTS } from "../content/events";
-import { generateCardReward, COMBAT_CREDITS, ELITE_CREDITS } from "../content/rewards";
+import { generateCardReward, COMBAT_CREDITS, ELITE_CREDITS, TREASURE_CREDITS } from "../content/rewards";
 
 export function reduce(state: GameState, action: Action): GameState {
   switch (action.type) {
@@ -405,7 +405,7 @@ export function reduce(state: GameState, action: Action): GameState {
         case "treasure": {
           const [cards, newState] = generateCardReward(s, 1);
           s = newState;
-          return { ...s, scene: "reward", rewardCards: cards, credits: s.credits + 25 };
+          return { ...s, scene: "reward", rewardCards: cards, credits: s.credits + TREASURE_CREDITS };
         }
 
         default:
@@ -449,7 +449,7 @@ export function reduce(state: GameState, action: Action): GameState {
       const event = EVENTS.find(e => e.id === state.currentEventId);
       if (!event) return { ...state, scene: "map", currentEventId: undefined };
       const choice = event.choices[action.choiceIndex];
-      if (!choice) return state;
+      if (!choice) return { ...state, scene: "map", currentEventId: undefined };
 
       let s: GameState = { ...state, currentEventId: undefined };
       const { outcome } = choice;
@@ -471,7 +471,7 @@ export function reduce(state: GameState, action: Action): GameState {
       } else if (outcome.kind === "addCurse") {
         s = { ...s, deck: [...s.deck, makeCard("tech_debt")] };
       } else if (outcome.kind === "gainCard") {
-        const [cards, newState] = generateCardReward(s, 1);
+        const [cards, newState] = generateCardReward(s, 1, outcome.rarity);
         s = { ...newState, deck: [...newState.deck, ...cards] };
       }
       // "nothing": no changes
