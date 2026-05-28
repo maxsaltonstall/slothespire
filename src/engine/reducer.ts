@@ -60,8 +60,11 @@ export function reduce(state: GameState, action: Action): GameState {
           : state.combat,
       };
 
+      // Use upgradedEffects if card is upgraded AND upgradedEffects exists
+      const effects = (card.upgraded && def.upgradedEffects) ? def.upgradedEffects : def.effects;
+
       // Apply each effect
-      for (const effect of def.effects) {
+      for (const effect of effects) {
         if (effect.kind === "burn") {
           const tid = targetId ?? s.combat?.enemies[0]?.instanceId;
           if (tid) {
@@ -83,6 +86,8 @@ export function reduce(state: GameState, action: Action): GameState {
           s = addHeadroom(s, finalHeadroom);
         } else if (effect.kind === "draw") {
           s = drawCards(s, effect.amount);
+        } else if (effect.kind === "restoreBudget") {
+          s = { ...s, player: { ...s.player, budget: Math.min(s.player.maxBudget, s.player.budget + effect.amount) } };
         } else if (effect.kind === "applyStatus") {
           if (effect.target === "self") {
             s = applyStatus(s, "player", effect.status, effect.stacks);
@@ -232,7 +237,10 @@ export function reduce(state: GameState, action: Action): GameState {
       // Phase 10: Power triggers (after enemy attacked, so headroom is for next enemy turn)
       for (const powerCard of activePowers) {
         const def = CARD_DEFS[powerCard.defId];
-        for (const effect of def?.powerTrigger ?? []) {
+        const triggerEffects = (powerCard.upgraded && def?.upgradedPowerTrigger)
+          ? def.upgradedPowerTrigger
+          : (def?.powerTrigger ?? []);
+        for (const effect of triggerEffects) {
           if (effect.kind === "headroom") {
             s = addHeadroom(s, headroomWithModifiers(effect.amount, s.player.statuses));
           }
