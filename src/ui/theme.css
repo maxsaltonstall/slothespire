@@ -1,0 +1,59 @@
+:root {
+  --color-base: #0a0e27;
+  --color-base-deep: #050818;
+  --color-accent: #00ffd1;
+  --color-pop: #ff00aa;
+  --color-text: #f4e8c1;
+  --color-text-dim: #6b7299;
+  --color-danger: #ff4a4a;
+  --color-energy: #ffd34d;
+  --color-energy-deep: #ff8800;
+  --color-border-low: #1a2249;
+
+  --font-display: "JetBrains Mono", "Space Mono", ui-monospace, "Courier New", monospace;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --glow-accent: 0 0 12px rgba(0, 255, 209, 0.45);
+  --glow-pop:    0 0 12px rgba(255, 0, 170, 0.45);
+  --glow-danger: 0 0 12px rgba(255, 74, 74, 0.45);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--color-base);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  min-height: 100vh;
+}
+
+#app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+button {
+  font-family: var(--font-display);
+  background: var(--color-base-deep);
+  color: var(--color-accent);
+  border: 1px solid var(--color-accent);
+  padding: 10px 16px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  box-shadow: var(--glow-accent);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+button:hover { transform: translateY(-1px); box-shadow: 0 0 18px rgba(0, 255, 209, 0.7); }
+button:active { transform: translateY(0); }
+button.primary {
+  background: var(--color-pop);
+  color: white;
+  border-color: var(--color-pop);
+  box-shadow: var(--glow-pop);
+}
+button.primary:hover { box-shadow: 0 0 18px rgba(255, 0, 170, 0.7); }
+
+h1, h2, h3 { font-family: var(--font-display); letter-spacing: 1px; }
