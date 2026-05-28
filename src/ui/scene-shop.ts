@@ -1,5 +1,6 @@
 import type { GameState, Card } from "../engine/state";
 import type { Action } from "../engine/actions";
+import { HOTFIX_DEFS } from "../content/hotfixes";
 
 function cardRow(card: Card, btnClass: string, btnText: string, disabled: boolean): string {
   return `
@@ -22,6 +23,24 @@ export function renderShop(state: GameState, dispatch: (a: Action) => void): HTM
   const forSaleHtml = shopCards.length > 0
     ? shopCards.map(c => cardRow(c, "buy-btn", `BUY (${PRICE}¢)`, state.credits < PRICE)).join("")
     : `<span class="shop-empty">No cards in stock</span>`;
+
+  const hotfixHtml = Object.values(HOTFIX_DEFS).map(hf => {
+    const alreadyOwned = state.player.hotfixes.includes(hf.id);
+    const slotsFull = state.player.hotfixes.length >= 3;
+    const cantAfford = state.credits < 60;
+    const disabled = alreadyOwned || slotsFull || cantAfford;
+    const reason = alreadyOwned ? "owned" : slotsFull ? "slots full" : cantAfford ? "insufficient ¢" : "";
+    return `
+      <div class="shop-row">
+        <span class="sr-cost">💊</span>
+        <span class="sr-name">${hf.name}</span>
+        <span class="sr-type">hotfix</span>
+        <button class="buy-btn" data-hotfix="${hf.id}" ${disabled ? "disabled" : ""}>
+          BUY (60¢)${reason ? ` — ${reason}` : ""}
+        </button>
+      </div>
+    `;
+  }).join("");
 
   const deckHtml = state.deck.map(c => cardRow(c, "remove-btn", `Remove (${REMOVE_COST}¢)`, state.credits < REMOVE_COST)).join("");
 
@@ -48,13 +67,18 @@ export function renderShop(state: GameState, dispatch: (a: Action) => void): HTM
     <div class="shop-credits">CREDITS: ${state.credits}</div>
     <div class="shop-section">CARDS FOR SALE — ${PRICE}¢ each</div>
     ${forSaleHtml}
+    <div class="shop-section">HOTFIXES — 60¢ each</div>
+    ${hotfixHtml}
     <div class="shop-section">YOUR DECK — Remove a Card (${REMOVE_COST}¢)</div>
     ${deckHtml}
     <button class="shop-leave" id="leave-shop">LEAVE SHOP</button>
   `;
 
-  root.querySelectorAll<HTMLButtonElement>(".buy-btn:not([disabled])").forEach(btn => {
+  root.querySelectorAll<HTMLButtonElement>(".buy-btn:not([disabled])[data-id]").forEach(btn => {
     btn.addEventListener("click", () => dispatch({ type: "BUY_CARD", cardInstanceId: btn.dataset.id! }));
+  });
+  root.querySelectorAll<HTMLButtonElement>("[data-hotfix]:not([disabled])").forEach(btn => {
+    btn.addEventListener("click", () => dispatch({ type: "BUY_HOTFIX", hotfixId: btn.dataset.hotfix! }));
   });
   root.querySelectorAll<HTMLButtonElement>(".remove-btn:not([disabled])").forEach(btn => {
     btn.addEventListener("click", () => dispatch({ type: "REMOVE_CARD", cardInstanceId: btn.dataset.id! }));

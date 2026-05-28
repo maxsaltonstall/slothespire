@@ -18,4 +18,5 @@ export type Action =
   | { type: "GO_TO_CODEX"; returnScene: "map" | "title" | "combat" }
   | { type: "CLOSE_CODEX" }
   | { type: "SHOW_UPGRADE_PICKER" }
-  | { type: "CHOOSE_CARD_TO_UPGRADE"; cardInstanceId: string };
+  | { type: "CHOOSE_CARD_TO_UPGRADE"; cardInstanceId: string }
+  | { type: "BUY_HOTFIX"; hotfixId: string };

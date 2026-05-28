@@ -65,3 +65,27 @@ describe("BUY_CARD", () => {
     expect(s2).toBe(s);
   });
 });
+
+describe("BUY_HOTFIX", () => {
+  it("adds hotfix to player slots and deducts 60 credits", () => {
+    let s = shopState();
+    s = { ...s, credits: 100 };
+    const s2 = reduce(s, { type: "BUY_HOTFIX", hotfixId: "rollback_hotfix" });
+    expect(s2.player.hotfixes).toContain("rollback_hotfix");
+    expect(s2.credits).toBe(40);
+  });
+
+  it("no-op if credits < 60", () => {
+    let s = shopState();
+    s = { ...s, credits: 50 };
+    const s2 = reduce(s, { type: "BUY_HOTFIX", hotfixId: "rollback_hotfix" });
+    expect(s2).toBe(s);
+  });
+
+  it("no-op if already has 3 hotfixes", () => {
+    let s = shopState();
+    s = { ...s, credits: 200, player: { ...s.player, hotfixes: ["rollback_hotfix", "failover_hotfix", "rollback_hotfix"] } };
+    const s2 = reduce(s, { type: "BUY_HOTFIX", hotfixId: "failover_hotfix" });
+    expect(s2).toBe(s);
+  });
+});
