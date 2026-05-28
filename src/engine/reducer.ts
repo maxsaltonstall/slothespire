@@ -262,7 +262,14 @@ export function reduce(state: GameState, action: Action): GameState {
             s = drawCards(s, effect.amount);
           } else if (effect.kind === "applyStatus") {
             if (effect.target === "self") {
-              s = applyStatus(s, "player", effect.status, effect.stacks);
+              // Cap pressure from power triggers to avoid runaway scaling
+              if (effect.status === "pressure") {
+                const current = s.player.statuses.pressure ?? 0;
+                const newStacks = Math.min(4, current + effect.stacks) - current;
+                if (newStacks > 0) s = applyStatus(s, "player", effect.status, newStacks);
+              } else {
+                s = applyStatus(s, "player", effect.status, effect.stacks);
+              }
             } else if (effect.target === "all") {
               for (const enemy of s.combat?.enemies ?? []) {
                 s = applyStatus(s, enemy.instanceId, effect.status, effect.stacks);
@@ -627,6 +634,17 @@ export function reduce(state: GameState, action: Action): GameState {
         ...state,
         scene: "map",
         deck: [...state.deck.slice(0, idx), upgraded, ...state.deck.slice(idx + 1)],
+      };
+    }
+
+    case "BUY_HOTFIX": {
+      if (state.credits < 60) return state;
+      if (state.player.hotfixes.length >= 3) return state;
+      if (!(action.hotfixId in HOTFIX_DEFS)) return state;
+      return {
+        ...state,
+        credits: state.credits - 60,
+        player: { ...state.player, hotfixes: [...state.player.hotfixes, action.hotfixId] },
       };
     }
 
