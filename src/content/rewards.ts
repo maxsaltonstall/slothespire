@@ -1,0 +1,56 @@
+import type { GameState, Card } from "../engine/state";
+import type { CardDef } from "./cards";
+import { CARD_DEFS, makeCard } from "./cards";
+import { nextRng } from "../engine/rng";
+
+// Cards eligible for reward offers (no starter-only, no curses)
+const REWARD_POOL: CardDef[] = Object.values(CARD_DEFS).filter(
+  def => def.type !== "curse" && def.cost >= 0 &&
+    !["manual_fix", "failover", "page_senior_engineer"].includes(def.id)
+);
+
+// Simple rarity heuristic based on known card IDs
+const CARD_RARITY: Record<string, "common" | "uncommon" | "rare"> = {
+  canary_deploy: "common",
+  circuit_breaker: "common",
+  chaos_engineering: "uncommon",
+  auto_scaling: "uncommon",
+  page_the_ceo: "rare",
+};
+
+function cardRarity(defId: string): "common" | "uncommon" | "rare" {
+  return CARD_RARITY[defId] ?? "common";
+}
+
+export function generateCardReward(state: GameState, count = 3): [Card[], GameState] {
+  let s = state;
+  const offered: Card[] = [];
+  const usedIds = new Set<string>();
+
+  for (let i = 0; i < count; i++) {
+    const [r1, ns1] = nextRng(s);
+    s = ns1;
+    let targetRarity: "common" | "uncommon" | "rare";
+    if (r1 < 0.6) targetRarity = "common";
+    else if (r1 < 0.9) targetRarity = "uncommon";
+    else targetRarity = "rare";
+
+    let candidates = REWARD_POOL.filter(d => cardRarity(d.id) === targetRarity && !usedIds.has(d.id));
+    if (candidates.length === 0) {
+      candidates = REWARD_POOL.filter(d => !usedIds.has(d.id));
+    }
+    if (candidates.length === 0) break;
+
+    const [r2, ns2] = nextRng(s);
+    s = ns2;
+    const def = candidates[Math.floor(r2 * candidates.length)];
+    usedIds.add(def.id);
+    offered.push(makeCard(def.id));
+  }
+
+  return [offered, s];
+}
+
+export const COMBAT_CREDITS = 50;
+export const ELITE_CREDITS = 75;
+export const TREASURE_CREDITS = 25;
