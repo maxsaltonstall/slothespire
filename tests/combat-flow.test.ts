@@ -355,4 +355,14 @@ describe("END_TURN with statuses", () => {
     const s1 = reduce(s, { type: "END_TURN" });
     expect(s1.player.statuses.toil).toBe(1);
   });
+
+  it("burnout reduces draw by 1 and is consumed (one-shot)", () => {
+    let s = startedRun();
+    s = applyStatus(s, "player", "burnout", 1);
+    const enemy = s.combat!.enemies[0];
+    s = { ...s, combat: { ...s.combat!, intentByEnemy: { [enemy.instanceId]: { kind: "burn", amount: 0 } } } };
+    const s1 = reduce(s, { type: "END_TURN" });
+    expect(s1.player.hand.length).toBe(4); // 5 - 1 burnout penalty
+    expect(s1.player.statuses.burnout).toBeUndefined(); // consumed
+  });
 });
