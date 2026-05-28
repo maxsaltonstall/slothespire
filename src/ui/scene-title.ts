@@ -47,7 +47,7 @@ export function renderTitle(
       <button data-action="codex">CODEX</button>
       <button data-action="settings" disabled title="Coming in M9">SETTINGS</button>
     </div>
-    <div class="stamp">v0.0.1 — M1 walking skeleton</div>
+    <div class="stamp">v1.0.0</div>
   `;
 
   root.querySelector<HTMLButtonElement>('[data-action="new-run"]')!

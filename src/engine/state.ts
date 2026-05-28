@@ -89,7 +89,7 @@ export interface GameState {
   rewardCards?: Card[];
   shopCards?: Card[];
   rewardRelic?: string;
-  codexReturnScene?: "map" | "title";
+  codexReturnScene?: "map" | "title" | "combat";
 }
 
 function makeRunId(): string {

@@ -15,7 +15,7 @@ export type Action =
   | { type: "REMOVE_CARD"; cardInstanceId: string }
   | { type: "BUY_CARD"; cardInstanceId: string }
   | { type: "PICK_REWARD_RELIC" }
-  | { type: "GO_TO_CODEX"; returnScene: "map" | "title" }
+  | { type: "GO_TO_CODEX"; returnScene: "map" | "title" | "combat" }
   | { type: "CLOSE_CODEX" }
   | { type: "SHOW_UPGRADE_PICKER" }
   | { type: "CHOOSE_CARD_TO_UPGRADE"; cardInstanceId: string };
