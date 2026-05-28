@@ -22,6 +22,7 @@ export function reduce(state: GameState, action: Action): GameState {
         combat: {
           enemies: [enemy],
           intentByEnemy: { [enemy.instanceId]: firstIntent },
+          activePowers: [],
           turn: 1,
           phase: "player",
         },
