@@ -6,7 +6,8 @@ export type EffectSpec =
   | { kind: "headroom"; amount: number }
   | { kind: "draw"; amount: number }
   | { kind: "restoreBudget"; amount: number }
-  | { kind: "applyStatus"; status: StatusId; stacks: number; target: "single" | "all" | "self" };
+  | { kind: "applyStatus"; status: StatusId; stacks: number; target: "single" | "all" | "self" }
+  | { kind: "removeStatus"; status: StatusId; target: "self" | "single" };
 
 export interface CardDef {
   id: string;
@@ -158,6 +159,101 @@ export const CARD_DEFS: Record<string, CardDef> = {
     powerTrigger: [{ kind: "headroom", amount: 3 }, { kind: "draw", amount: 1 }],
     upgradedPowerTrigger: [{ kind: "headroom", amount: 5 }, { kind: "draw", amount: 1 }],
     flavor: "Distributed reliability, automatically.",
+  },
+  on_call_swap: {
+    id: "on_call_swap", name: "On-Call Swap", type: "skill", cost: 0,
+    effects: [{ kind: "draw", amount: 2 }],
+    upgradedEffects: [{ kind: "draw", amount: 3 }],
+    exhaust: true,
+    flavor: "Hand it to someone else. Fast.",
+  },
+  incident_playbook: {
+    id: "incident_playbook", name: "Incident Playbook", type: "power", cost: 2,
+    effects: [],
+    powerTrigger: [{ kind: "draw", amount: 1 }, { kind: "headroom", amount: 2 }],
+    upgradedPowerTrigger: [{ kind: "draw", amount: 1 }, { kind: "headroom", amount: 4 }],
+    flavor: "Every scenario, pre-planned.",
+  },
+  error_budget_calc: {
+    id: "error_budget_calc", name: "Error Budget Calc", type: "skill", cost: 1,
+    effects: [{ kind: "applyStatus", status: "confidence", stacks: 1, target: "self" }],
+    upgradedEffects: [{ kind: "applyStatus", status: "confidence", stacks: 1, target: "self" }, { kind: "headroom", amount: 4 }],
+    flavor: "You have 0.1% left. Spend it wisely.",
+  },
+  dependency_audit: {
+    id: "dependency_audit", name: "Dependency Audit", type: "attack", cost: 2,
+    effects: [{ kind: "burn", amount: 12 }, { kind: "applyStatus", status: "throttled", stacks: 2, target: "single" }],
+    upgradedEffects: [{ kind: "burn", amount: 16 }, { kind: "applyStatus", status: "throttled", stacks: 2, target: "single" }],
+    flavor: "Forty-seven transitive dependencies. Three are vulnerable.",
+  },
+  blue_green_deploy: {
+    id: "blue_green_deploy", name: "Blue-Green Deploy", type: "attack", cost: 1,
+    effects: [{ kind: "burn", amount: 7 }, { kind: "draw", amount: 1 }],
+    upgradedEffects: [{ kind: "burn", amount: 10 }, { kind: "draw", amount: 1 }],
+    flavor: "Route traffic. Switch. Celebrate.",
+  },
+  chaos_monkey: {
+    id: "chaos_monkey", name: "Chaos Monkey", type: "attack", cost: 1,
+    effects: [{ kind: "burn", amount: 6 }, { kind: "applyStatus", status: "customer_facing", stacks: 1, target: "single" }],
+    upgradedEffects: [{ kind: "burn", amount: 8 }, { kind: "applyStatus", status: "customer_facing", stacks: 1, target: "single" }],
+    flavor: "Randomly terminates instances in production. That's the feature.",
+  },
+  toil_reduction: {
+    id: "toil_reduction", name: "Toil Reduction", type: "skill", cost: 2,
+    effects: [{ kind: "removeStatus", status: "toil", target: "self" }, { kind: "headroom", amount: 8 }],
+    upgradedEffects: [{ kind: "removeStatus", status: "toil", target: "self" }, { kind: "headroom", amount: 12 }],
+    flavor: "Automate the thing that pages you at 3am.",
+  },
+  load_shedding: {
+    id: "load_shedding", name: "Load Shedding", type: "skill", cost: 1,
+    effects: [{ kind: "applyStatus", status: "throttled", stacks: 3, target: "all" }],
+    upgradedEffects: [{ kind: "applyStatus", status: "throttled", stacks: 4, target: "all" }],
+    flavor: "Shed load before the load sheds you.",
+  },
+  slo_tightening: {
+    id: "slo_tightening", name: "SLO Tightening", type: "power", cost: 3,
+    effects: [],
+    powerTrigger: [{ kind: "applyStatus", status: "pressure", stacks: 1, target: "self" }],
+    upgradedPowerTrigger: [{ kind: "applyStatus", status: "pressure", stacks: 2, target: "self" }],
+    flavor: "Make the target harder. Make yourself stronger.",
+  },
+  capacity_planning: {
+    id: "capacity_planning", name: "Capacity Planning", type: "skill", cost: 2,
+    effects: [{ kind: "restoreBudget", amount: 8 }, { kind: "draw", amount: 2 }],
+    upgradedEffects: [{ kind: "restoreBudget", amount: 12 }, { kind: "draw", amount: 2 }],
+    flavor: "Provision for peak. Not for Tuesday at 2am.",
+  },
+  on_fire: {
+    id: "on_fire", name: "On Fire", type: "attack", cost: 0,
+    effects: [{ kind: "burn", amount: 5 }],
+    upgradedEffects: [{ kind: "burn", amount: 8 }],
+    flavor: "Everything is on fire. Might as well use it.",
+  },
+  war_room: {
+    id: "war_room", name: "War Room", type: "skill", cost: 3,
+    effects: [{ kind: "restoreBudget", amount: 20 }],
+    upgradedEffects: [{ kind: "restoreBudget", amount: 28 }],
+    exhaust: true,
+    flavor: "All hands on deck. Only pull once.",
+  },
+  retry_with_backoff: {
+    id: "retry_with_backoff", name: "Retry with Backoff", type: "attack", cost: 1,
+    effects: [{ kind: "burn", amount: 6 }, { kind: "burn", amount: 6 }],
+    upgradedEffects: [{ kind: "burn", amount: 8 }, { kind: "burn", amount: 8 }],
+    flavor: "Try again. Then try again, but slower.",
+  },
+  postmortem_template: {
+    id: "postmortem_template", name: "Postmortem Template", type: "skill", cost: 1,
+    effects: [{ kind: "restoreBudget", amount: 6 }, { kind: "applyStatus", status: "flow", stacks: 1, target: "self" }],
+    upgradedEffects: [{ kind: "restoreBudget", amount: 9 }, { kind: "applyStatus", status: "flow", stacks: 1, target: "self" }],
+    flavor: "Timeline: unclear. Impact: large. Action items: many.",
+  },
+  observability_pipeline: {
+    id: "observability_pipeline", name: "Observability Pipeline", type: "power", cost: 2,
+    effects: [],
+    powerTrigger: [{ kind: "applyStatus", status: "observability", stacks: 1, target: "self" }],
+    upgradedPowerTrigger: [{ kind: "applyStatus", status: "observability", stacks: 2, target: "self" }],
+    flavor: "See everything. All the time.",
   },
 };
 

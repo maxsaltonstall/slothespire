@@ -87,6 +87,10 @@ export function reduce(state: GameState, action: Action): GameState {
           s = addHeadroom(s, finalHeadroom);
         } else if (effect.kind === "draw") {
           s = drawCards(s, effect.amount);
+        } else if (effect.kind === "removeStatus") {
+          const tgt = effect.target === "self" ? "player"
+                    : (targetId ?? s.combat?.enemies[0]?.instanceId ?? "player");
+          s = consumeStatus(s, tgt, effect.status);
         } else if (effect.kind === "restoreBudget") {
           s = { ...s, player: { ...s.player, budget: Math.min(s.player.maxBudget, s.player.budget + effect.amount) } };
         } else if (effect.kind === "applyStatus") {
@@ -254,6 +258,19 @@ export function reduce(state: GameState, action: Action): GameState {
         for (const effect of triggerEffects) {
           if (effect.kind === "headroom") {
             s = addHeadroom(s, headroomWithModifiers(effect.amount, s.player.statuses));
+          } else if (effect.kind === "draw") {
+            s = drawCards(s, effect.amount);
+          } else if (effect.kind === "applyStatus") {
+            if (effect.target === "self") {
+              s = applyStatus(s, "player", effect.status, effect.stacks);
+            } else if (effect.target === "all") {
+              for (const enemy of s.combat?.enemies ?? []) {
+                s = applyStatus(s, enemy.instanceId, effect.status, effect.stacks);
+              }
+            } else {
+              const tid = s.combat?.enemies[0]?.instanceId;
+              if (tid) s = applyStatus(s, tid, effect.status, effect.stacks);
+            }
           }
         }
       }

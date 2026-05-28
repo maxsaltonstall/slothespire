@@ -11,11 +11,20 @@ const REWARD_POOL: CardDef[] = Object.values(CARD_DEFS).filter(
 
 // Simple rarity heuristic based on known card IDs
 const CARD_RARITY: Record<string, "common" | "uncommon" | "rare"> = {
-  canary_deploy: "common",
-  circuit_breaker: "common",
-  chaos_engineering: "uncommon",
-  auto_scaling: "uncommon",
-  page_the_ceo: "rare",
+  // Common
+  canary_deploy: "common", circuit_breaker: "common", rollback: "common",
+  load_balancer: "common", monitoring_alert: "common", feature_flag: "common",
+  health_check: "common", graceful_degradation: "common", rate_limiter: "common",
+  on_fire: "common", blue_green_deploy: "common", on_call_swap: "common",
+  // Uncommon
+  chaos_engineering: "uncommon", auto_scaling: "uncommon", zero_downtime_deploy: "uncommon",
+  sli_dashboard: "uncommon", runbook: "uncommon", chaos_monkey: "uncommon",
+  error_budget_calc: "uncommon", load_shedding: "uncommon", toil_reduction: "uncommon",
+  dependency_audit: "uncommon", capacity_planning: "uncommon", retry_with_backoff: "uncommon",
+  postmortem_template: "uncommon", incident_playbook: "uncommon", service_mesh: "uncommon",
+  // Rare
+  slo_tightening: "rare", observability_pipeline: "rare",
+  page_the_ceo: "rare", postmortem: "rare", war_room: "rare",
 };
 
 function cardRarity(defId: string): "common" | "uncommon" | "rare" {

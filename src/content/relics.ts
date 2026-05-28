@@ -50,6 +50,77 @@ export const RELIC_DEFS: Record<string, RelicDef> = {
     flavor: "Continuous verification. Always on.",
     onTurnStart: (s) => addHeadroom(s, 1),
   },
+  error_tracking: {
+    id: "error_tracking", name: "Error Tracking", product: "Datadog Error Tracking",
+    description: "At start of combat, apply Customer-Facing 1 to all enemies.",
+    flavor: "Group. Deduplicate. Prioritize.",
+    onCombatStart: (s) => {
+      if (!s.combat) return s;
+      let fresh = s;
+      for (const enemy of fresh.combat!.enemies) {
+        fresh = applyStatus(fresh, enemy.instanceId, "customer_facing", 1);
+      }
+      return fresh;
+    },
+  },
+  dashboards: {
+    id: "dashboards", name: "Dashboards", product: "Datadog Dashboards",
+    description: "At start of each turn, gain 1 Headroom.",
+    flavor: "The graph goes up. You also go up.",
+    onTurnStart: (s) => addHeadroom(s, 1),
+  },
+  service_catalog: {
+    id: "service_catalog", name: "Service Catalog", product: "Datadog Service Catalog",
+    description: "At start of combat, gain Observability 1.",
+    flavor: "Know your dependencies. Own your services.",
+    onCombatStart: (s) => applyStatus(s, "player", "observability", 1),
+  },
+  incident_management: {
+    id: "incident_management", name: "Incident Management", product: "Datadog Incident Management",
+    description: "At start of combat, gain Confidence 1.",
+    flavor: "Declared. Triaged. Resolved.",
+    onCombatStart: (s) => applyStatus(s, "player", "confidence", 1),
+  },
+  workflow_automation: {
+    id: "workflow_automation", name: "Workflow Automation", product: "Datadog Workflow Automation",
+    description: "At start of combat, gain 6 Headroom.",
+    flavor: "Automate the response before the alert fires.",
+    onCombatStart: (s) => addHeadroom(s, 6),
+  },
+  notebooks: {
+    id: "notebooks", name: "Notebooks", product: "Datadog Notebooks",
+    description: "At start of combat, draw 1 extra card.",
+    flavor: "Collaborative investigation, documented.",
+    onCombatStart: (s) => drawCards(s, 1),
+  },
+  cloud_cost_mgmt: {
+    id: "cloud_cost_mgmt", name: "Cloud Cost Mgmt", product: "Datadog Cloud Cost Management",
+    description: "At start of each turn, gain 5 Credits.",
+    flavor: "Tag your resources. Save your money.",
+    onTurnStart: (s) => ({ ...s, credits: s.credits + 5 }),
+  },
+  rum: {
+    id: "rum", name: "RUM", product: "Datadog Real User Monitoring",
+    description: "At start of each turn, if hand size < 3, draw 1 card.",
+    flavor: "See what real users actually experience.",
+    onTurnStart: (s) => s.player.hand.length < 3 ? drawCards(s, 1) : s,
+  },
+  sensitive_data_scanner: {
+    id: "sensitive_data_scanner", name: "Sensitive Data Scanner", product: "Datadog SDS",
+    description: "At start of combat, remove the first curse from your deck (if any).",
+    flavor: "Find the secrets. Remove the secrets.",
+    onCombatStart: (s) => {
+      const curseIdx = s.deck.findIndex(c => c.type === "curse");
+      if (curseIdx === -1) return s;
+      return { ...s, deck: [...s.deck.slice(0, curseIdx), ...s.deck.slice(curseIdx + 1)] };
+    },
+  },
+  continuous_profiler: {
+    id: "continuous_profiler", name: "Continuous Profiler", product: "Datadog Continuous Profiler",
+    description: "At start of combat, gain Pressure 1.",
+    flavor: "Always-on performance visibility.",
+    onCombatStart: (s) => applyStatus(s, "player", "pressure", 1),
+  },
 };
 
 export const RELIC_POOL = Object.keys(RELIC_DEFS).filter(id => id !== "pager");
