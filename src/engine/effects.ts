@@ -33,19 +33,21 @@ export function shuffleDeck(deck: Card[], state: GameState): [Card[], GameState]
 export function drawCards(state: GameState, count: number): GameState {
   let s = state;
   let { hand, draw, discard } = s.player;
+  let remaining = count;
 
-  // If draw is empty and we still need cards, reshuffle discard
-  if (draw.length === 0 && discard.length > 0) {
-    const [reshuffled, newState] = shuffleDeck(discard, s);
-    s = newState;
-    draw = reshuffled;
-    discard = [];
+  while (remaining > 0) {
+    if (draw.length === 0) {
+      if (discard.length === 0) break; // nothing left to draw
+      const [reshuffled, newState] = shuffleDeck(discard, s);
+      s = newState;
+      draw = reshuffled;
+      discard = [];
+    }
+    const toDraw = Math.min(remaining, draw.length);
+    hand = [...hand, ...draw.slice(0, toDraw)];
+    draw = draw.slice(toDraw);
+    remaining -= toDraw;
   }
-
-  const toDraw = Math.min(count, draw.length);
-  const drawn = draw.slice(0, toDraw);
-  draw = draw.slice(toDraw);
-  hand = [...hand, ...drawn];
 
   return { ...s, player: { ...s.player, hand, draw, discard } };
 }

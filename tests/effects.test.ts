@@ -86,6 +86,18 @@ describe("drawCards", () => {
     expect(s2.player.draw.length).toBe(1);
     expect(s2.player.discard.length).toBe(0);
   });
+
+  it("draws across the draw/discard boundary when draw runs out mid-count", () => {
+    const drawCards2 = [makeCard("manual_fix"), makeCard("manual_fix")];
+    const discardCards = [makeCard("failover"), makeCard("failover"), makeCard("failover")];
+    let s = initialState("boundary-test");
+    s = { ...s, player: { ...s.player, draw: drawCards2, discard: discardCards, hand: [] } };
+    const s2 = drawCards(s, 5);
+    // Should draw 2 from draw + reshuffle 3 from discard, draw 3 more = 5 total
+    expect(s2.player.hand.length).toBe(5);
+    expect(s2.player.draw.length).toBe(0);
+    expect(s2.player.discard.length).toBe(0);
+  });
 });
 
 describe("shuffleDeck", () => {
