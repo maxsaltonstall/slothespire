@@ -1,34 +1,36 @@
 import type { Action } from "./actions";
-import { initialState, type GameState, type Enemy } from "./state";
-
-function makeStubEnemy(): Enemy {
-  return {
-    instanceId: "e0",
-    defId: "flapping_health_check",
-    name: "Flapping Health Check",
-    stability: 12,
-    maxStability: 12,
-    statuses: {},
-  };
-}
+import { initialState, type GameState } from "./state";
+import { buildStarterDeck } from "../content/cards";
+import { createEnemy, getIntent } from "../content/enemies";
+import { shuffleDeck, drawCards } from "./effects";
 
 export function reduce(state: GameState, action: Action): GameState {
   switch (action.type) {
-    case "START_RUN":
+    case "START_RUN": {
+      const deck = buildStarterDeck();
+      let s: GameState = { ...initialState(state.meta.seed), deck };
+      const [shuffled, afterShuffle] = shuffleDeck(deck, s);
+      s = { ...afterShuffle, player: { ...afterShuffle.player, draw: shuffled } };
+      s = drawCards(s, 5);
+
+      const enemy = createEnemy("flapping_health_check");
+      const firstIntent = getIntent(enemy.defId, 0);
+
       return {
-        ...state,
+        ...s,
         scene: "combat",
         combat: {
-          enemies: [makeStubEnemy()],
-          intentByEnemy: { e0: { kind: "burn", amount: 6 } },
+          enemies: [enemy],
+          intentByEnemy: { [enemy.instanceId]: firstIntent },
           turn: 1,
           phase: "player",
         },
       };
-    case "PLAY_CARD_STUB":
-      return { ...state, scene: "lost", combat: undefined };
+    }
+
     case "RETURN_TO_TITLE":
       return initialState(state.meta.seed);
+
     default:
       return state;
   }
