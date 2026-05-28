@@ -42,6 +42,7 @@ export function renderReward(state: GameState, dispatch: (a: Action) => void): H
       if (e.kind === "draw") return `Draw ${e.amount}`;
       if (e.kind === "selfBurn") return `Self-Burn ${e.amount}`;
       if (e.kind === "applyStatus") return `Apply ${e.status.replace(/_/g, " ")} ×${e.stacks}`;
+      if (e.kind === "restoreBudget") return `Restore ${e.amount} Budget`;
       return "";
     }).filter(Boolean).join(". ") ?? "";
     const typeIcon = card.type === "attack" ? "⚔" : card.type === "power" ? "✦" : "🛡";

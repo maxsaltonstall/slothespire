@@ -66,7 +66,7 @@ export const ENEMY_DEFS: Record<string, EnemyDef> = {
   stale_cache: {
     id: "stale_cache", name: "Stale Cache", stability: 22,
     intentPattern: [
-      { kind: "harden" as const, amount: 6 },
+      { kind: "buff" as const, status: "pressure" as const, stacks: 1 },
       { kind: "burn" as const, amount: 7 },
     ],
   },

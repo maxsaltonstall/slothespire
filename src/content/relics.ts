@@ -56,7 +56,11 @@ export const RELIC_POOL = Object.keys(RELIC_DEFS).filter(id => id !== "pager");
 
 export function generateRelicReward(state: GameState): [string, GameState] {
   const available = RELIC_POOL.filter(id => !state.player.relics.includes(id));
-  if (available.length === 0) return [RELIC_POOL[0], state];
+  if (available.length === 0) {
+    // All relics owned — fall back to random from full pool (duplicate allowed)
+    const [rand, newState] = nextRng(state);
+    return [RELIC_POOL[Math.floor(rand * RELIC_POOL.length)], newState];
+  }
   const [rand, newState] = nextRng(state);
   return [available[Math.floor(rand * available.length)], newState];
 }
