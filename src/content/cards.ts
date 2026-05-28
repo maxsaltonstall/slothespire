@@ -1,9 +1,11 @@
-import type { Card, CardType } from "../engine/state";
+import type { Card, CardType, StatusId } from "../engine/state";
 
-export interface EffectSpec {
-  kind: "burn" | "headroom" | "draw";
-  amount: number;
-}
+export type EffectSpec =
+  | { kind: "burn"; amount: number }
+  | { kind: "selfBurn"; amount: number }
+  | { kind: "headroom"; amount: number }
+  | { kind: "draw"; amount: number }
+  | { kind: "applyStatus"; status: StatusId; stacks: number; target: "single" | "all" | "self" };
 
 export interface CardDef {
   id: string;
@@ -12,6 +14,9 @@ export interface CardDef {
   cost: number;
   effects: EffectSpec[];
   flavor: string;
+  exhaust?: boolean;
+  powerTrigger?: EffectSpec[];
+  curseEffect?: EffectSpec[];
 }
 
 export const CARD_DEFS: Record<string, CardDef> = {
@@ -27,9 +32,10 @@ export const CARD_DEFS: Record<string, CardDef> = {
   },
   page_senior_engineer: {
     id: "page_senior_engineer", name: "Page Senior Engineer", type: "skill", cost: 2,
-    // Note: spec says draw 2 + gain 1 Energy next turn. Energy-next-turn deferred to M3
-    // (requires status system). M2 implements draw 2 only.
-    effects: [{ kind: "draw", amount: 2 }],
+    effects: [
+      { kind: "draw", amount: 2 },
+      { kind: "applyStatus", status: "flow", stacks: 1, target: "self" },
+    ],
     flavor: "They've seen this before.",
   },
   canary_deploy: {
@@ -41,6 +47,32 @@ export const CARD_DEFS: Record<string, CardDef> = {
     id: "circuit_breaker", name: "Circuit Breaker", type: "skill", cost: 1,
     effects: [{ kind: "headroom", amount: 8 }],
     flavor: "Stop the bleeding before you debug it.",
+  },
+  chaos_engineering: {
+    id: "chaos_engineering", name: "Chaos Engineering", type: "skill", cost: 2,
+    effects: [
+      { kind: "applyStatus", status: "customer_facing", stacks: 3, target: "all" },
+      { kind: "selfBurn", amount: 5 },
+    ],
+    flavor: "Break it on purpose so it doesn't break you on Friday.",
+  },
+  auto_scaling: {
+    id: "auto_scaling", name: "Auto-Scaling", type: "power", cost: 1,
+    effects: [],
+    powerTrigger: [{ kind: "headroom", amount: 4 }],
+    flavor: "Demand goes up. Capacity goes up.",
+  },
+  page_the_ceo: {
+    id: "page_the_ceo", name: "Page the CEO", type: "skill", cost: 2,
+    effects: [{ kind: "burn", amount: 30 }],
+    exhaust: true,
+    flavor: "Nuclear option. One per incident.",
+  },
+  tech_debt: {
+    id: "tech_debt", name: "Tech Debt", type: "curse", cost: -1,
+    effects: [],
+    curseEffect: [{ kind: "selfBurn", amount: 2 }],
+    flavor: "Unplayable. Costs 2 Budget every turn it sits in your hand.",
   },
 };
 

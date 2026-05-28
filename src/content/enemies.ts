@@ -17,6 +17,26 @@ export const ENEMY_DEFS: Record<string, EnemyDef> = {
       { kind: "burn", amount: 4 },
     ],
   },
+  memory_leak: {
+    id: "memory_leak",
+    name: "Memory Leak",
+    stability: 28,
+    intentPattern: [
+      { kind: "buff" as const, status: "pressure" as const, stacks: 1 },
+      { kind: "burn" as const, amount: 8 },
+      { kind: "buff" as const, status: "pressure" as const, stacks: 1 },
+      { kind: "burn" as const, amount: 10 },
+    ],
+  },
+  zombie_process: {
+    id: "zombie_process",
+    name: "Zombie Process",
+    stability: 18,
+    intentPattern: [
+      { kind: "debuff" as const, status: "toil" as const, stacks: 1 },
+      { kind: "burn" as const, amount: 5 },
+    ],
+  },
 };
 
 let _nextEnemyId = 0;
