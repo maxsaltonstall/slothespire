@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { reduce } from "../src/engine/reducer";
 import { initialState } from "../src/engine/state";
+import { applyStatus } from "../src/engine/effects";
+import { makeCard } from "../src/content/cards";
 
 function startedRun() {
   return reduce(initialState("combat-test"), { type: "START_RUN" });
@@ -187,5 +189,87 @@ describe("END_TURN", () => {
     const s1 = reduce(s0, { type: "END_TURN" });
     expect(s1.player.headroom).toBe(0); // always resets
     expect(s1.player.budget).toBe(80);  // budget unchanged (no burn)
+  });
+});
+
+describe("PLAY_CARD with statuses", () => {
+  it("pressure adds flat burn on top of base damage", () => {
+    let s = startedRun();
+    const enemy = s.combat!.enemies[0];
+    s = applyStatus(s, "player", "pressure", 2);
+    const attackCard = s.player.hand.find(c => c.defId === "manual_fix")!;
+    const stabilityBefore = enemy.stability;
+    const s2 = reduce(s, { type: "PLAY_CARD", cardInstanceId: attackCard.instanceId, targetId: enemy.instanceId });
+    // Manual Fix base 6 + pressure 2 = 8
+    expect(s2.combat!.enemies[0].stability).toBe(stabilityBefore - 8);
+  });
+
+  it("customer_facing on enemy amplifies burn ×1.5 (ceil)", () => {
+    let s = startedRun();
+    const enemy = s.combat!.enemies[0];
+    s = applyStatus(s, enemy.instanceId, "customer_facing", 1);
+    const attackCard = s.player.hand.find(c => c.defId === "manual_fix")!;
+    const stabilityBefore = enemy.stability;
+    const s2 = reduce(s, { type: "PLAY_CARD", cardInstanceId: attackCard.instanceId, targetId: enemy.instanceId });
+    // Manual Fix 6 × 1.5 = 9 (ceil)
+    expect(s2.combat!.enemies[0].stability).toBe(stabilityBefore - 9);
+  });
+
+  it("confidence doubles next attack and is consumed", () => {
+    let s = startedRun();
+    const enemy = s.combat!.enemies[0];
+    s = applyStatus(s, "player", "confidence", 1);
+    const attackCard = s.player.hand.find(c => c.defId === "manual_fix")!;
+    const stabilityBefore = enemy.stability;
+    const s2 = reduce(s, { type: "PLAY_CARD", cardInstanceId: attackCard.instanceId, targetId: enemy.instanceId });
+    expect(s2.combat!.enemies[0].stability).toBe(stabilityBefore - 12); // 6 × 2
+    expect(s2.player.statuses.confidence).toBeUndefined();
+  });
+
+  it("stability adds flat headroom to headroom cards", () => {
+    let s = startedRun();
+    s = applyStatus(s, "player", "stability", 3);
+    const skillCard = s.player.hand.find(c => c.defId === "failover")!;
+    const s2 = reduce(s, { type: "PLAY_CARD", cardInstanceId: skillCard.instanceId, targetId: null });
+    expect(s2.player.headroom).toBe(5 + 3); // failover base 5 + stability 3
+  });
+
+  it("applyStatus effect applies customer_facing to all enemies", () => {
+    let s = startedRun();
+    const enemy = s.combat!.enemies[0];
+    const ceCard = makeCard("chaos_engineering");
+    // Give enough energy and add the card to hand
+    s = { ...s, player: { ...s.player, hand: [...s.player.hand, ceCard], energy: 3 } };
+    const s2 = reduce(s, { type: "PLAY_CARD", cardInstanceId: ceCard.instanceId, targetId: enemy.instanceId });
+    const updatedEnemy = s2.combat!.enemies.find(e => e.instanceId === enemy.instanceId)!;
+    expect(updatedEnemy.statuses.customer_facing).toBe(3);
+    // Also verify self-burn (5 hits player budget)
+    expect(s2.player.budget).toBe(80 - 5);
+  });
+
+  it("Power card goes to activePowers, not discard", () => {
+    let s = startedRun();
+    const powerCard = makeCard("auto_scaling");
+    s = { ...s, player: { ...s.player, hand: [...s.player.hand, powerCard] } };
+    const s2 = reduce(s, { type: "PLAY_CARD", cardInstanceId: powerCard.instanceId, targetId: null });
+    expect(s2.combat!.activePowers.map(c => c.instanceId)).toContain(powerCard.instanceId);
+    expect(s2.player.discard.map(c => c.instanceId)).not.toContain(powerCard.instanceId);
+  });
+
+  it("Exhaust card goes to exhaust pile, not discard", () => {
+    let s = startedRun();
+    const exhaCard = makeCard("page_the_ceo");
+    s = { ...s, player: { ...s.player, hand: [...s.player.hand, exhaCard], energy: 3 } };
+    const s2 = reduce(s, { type: "PLAY_CARD", cardInstanceId: exhaCard.instanceId, targetId: null });
+    expect(s2.player.exhaust.map(c => c.instanceId)).toContain(exhaCard.instanceId);
+    expect(s2.player.discard.map(c => c.instanceId)).not.toContain(exhaCard.instanceId);
+  });
+
+  it("Curse card cannot be played (returns unchanged state reference)", () => {
+    let s = startedRun();
+    const curse = makeCard("tech_debt");
+    s = { ...s, player: { ...s.player, hand: [...s.player.hand, curse] } };
+    const s2 = reduce(s, { type: "PLAY_CARD", cardInstanceId: curse.instanceId, targetId: null });
+    expect(s2).toBe(s);
   });
 });

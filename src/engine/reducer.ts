@@ -2,7 +2,8 @@ import type { Action } from "./actions";
 import { initialState, type GameState } from "./state";
 import { buildStarterDeck, CARD_DEFS } from "../content/cards";
 import { createEnemy, getIntent } from "../content/enemies";
-import { shuffleDeck, drawCards, burnEnemy, addHeadroom } from "./effects";
+import { shuffleDeck, drawCards, burnEnemy, addHeadroom, applyStatus, consumeStatus, burnWithModifiers, headroomWithModifiers } from "./effects";
+import type { Intent } from "./state";
 
 export function reduce(state: GameState, action: Action): GameState {
   switch (action.type) {
@@ -36,35 +37,77 @@ export function reduce(state: GameState, action: Action): GameState {
       const { cardInstanceId, targetId } = action;
       const card = state.player.hand.find(c => c.instanceId === cardInstanceId);
       if (!card) return state;
-      if (state.player.energy < card.cost) return state;
 
       const def = CARD_DEFS[card.defId];
       if (!def) return state;
 
+      // Curses are unplayable
+      if (card.type === "curse") return state;
+
+      // Check energy (cost -1 = unplayable; cost 0 = free; cost >0 requires energy)
+      if (card.cost < 0) return state;
+      if (card.cost > 0 && state.player.energy < card.cost) return state;
+
+      const isPower = card.type === "power";
+      const isExhaust = def.exhaust === true;
+
+      // Remove from hand, deduct energy, route to correct pile
       let s: GameState = {
         ...state,
         player: {
           ...state.player,
-          energy: state.player.energy - card.cost,
+          energy: state.player.energy - Math.max(0, card.cost),
           hand: state.player.hand.filter(c => c.instanceId !== cardInstanceId),
-          discard: [...state.player.discard, card],
+          discard: isPower || isExhaust ? state.player.discard : [...state.player.discard, card],
+          exhaust: isExhaust ? [...state.player.exhaust, card] : state.player.exhaust,
         },
+        combat: isPower && state.combat
+          ? { ...state.combat, activePowers: [...state.combat.activePowers, card] }
+          : state.combat,
       };
 
+      // Apply each effect
       for (const effect of def.effects) {
         if (effect.kind === "burn") {
           const tid = targetId ?? s.combat?.enemies[0]?.instanceId;
-          if (tid) s = burnEnemy(s, tid, effect.amount);
+          if (tid) {
+            const enemy = s.combat?.enemies.find(e => e.instanceId === tid);
+            const finalDamage = burnWithModifiers(
+              effect.amount,
+              s.player.statuses,
+              enemy?.statuses ?? {}
+            );
+            if (s.player.statuses.confidence) {
+              s = consumeStatus(s, "player", "confidence");
+            }
+            s = burnEnemy(s, tid, finalDamage);
+          }
+        } else if (effect.kind === "selfBurn") {
+          s = { ...s, player: { ...s.player, budget: s.player.budget - effect.amount } };
         } else if (effect.kind === "headroom") {
-          s = addHeadroom(s, effect.amount);
+          const finalHeadroom = headroomWithModifiers(effect.amount, s.player.statuses);
+          s = addHeadroom(s, finalHeadroom);
         } else if (effect.kind === "draw") {
           s = drawCards(s, effect.amount);
+        } else if (effect.kind === "applyStatus") {
+          if (effect.target === "self") {
+            s = applyStatus(s, "player", effect.status, effect.stacks);
+          } else if (effect.target === "all") {
+            for (const enemy of s.combat?.enemies ?? []) {
+              s = applyStatus(s, enemy.instanceId, effect.status, effect.stacks);
+            }
+          } else {
+            const tid = targetId ?? s.combat?.enemies[0]?.instanceId;
+            if (tid) s = applyStatus(s, tid, effect.status, effect.stacks);
+          }
         }
       }
 
+      // Win check
       if (s.combat && s.combat.enemies.every(e => e.stability <= 0)) {
         return { ...s, scene: "won", combat: undefined };
       }
+      // Loss check
       if (s.player.budget <= 0) {
         return { ...s, scene: "lost", combat: undefined };
       }
