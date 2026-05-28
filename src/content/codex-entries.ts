@@ -205,9 +205,4 @@ export const CODEX_ENTRIES: Record<string, CodexEntry> = {
     description: "Stability 20 · Applies Toil then burns",
     realConcept: `A misconfigured TLS certificate — expired, self-signed, wrong domain, weak cipher — can silently fail clients, cause mysterious connection errors, or expose traffic to interception. The operational cost is high: debugging TLS issues is time-consuming (Toil), and the errors are often cryptic. In Slothespire, Misconfigured TLS first applies Toil (draining your energy), then attacks — representing how TLS problems exhaust on-call before the actual damage becomes apparent.`,
   },
-  deadlock_db: {
-    id: "deadlock_db", kind: "enemy", name: "Deadlock",
-    description: "Stability 30 · Applies heavy Toil then burns hard",
-    realConcept: `A deadlock occurs when two processes each hold a resource the other needs, creating a circular wait that neither can break. In databases, this shows as transactions hanging until a timeout kills one of them. Prevention strategies include consistent lock ordering, short transactions, and deadlock detection algorithms. Deadlock applies heavy Toil (two stacks, draining two energy next turn) before attacking — you're constrained and unable to act freely before taking the hit.`,
-  },
 };
