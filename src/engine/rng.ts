@@ -20,3 +20,13 @@ export function parseSeed(input: string): number {
   }
   return h >>> 0;
 }
+
+import type { GameState } from "./state";
+
+export function nextRng(state: GameState): [number, GameState] {
+  const r = mulberry32(parseSeed(state.meta.seed));
+  // advance to the correct cursor position
+  for (let i = 0; i < state.meta.rngCursor; i++) r();
+  const value = r();
+  return [value, { ...state, meta: { ...state.meta, rngCursor: state.meta.rngCursor + 1 } }];
+}

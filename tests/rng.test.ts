@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { mulberry32, parseSeed } from "../src/engine/rng";
+import { mulberry32, parseSeed, nextRng } from "../src/engine/rng";
+import { initialState } from "../src/engine/state";
 
 describe("mulberry32", () => {
   it("is deterministic for a given seed", () => {
@@ -41,5 +42,23 @@ describe("parseSeed", () => {
     const c = parseSeed("world");
     expect(a).toBe(b);
     expect(a).not.toBe(c);
+  });
+});
+
+describe("nextRng", () => {
+  it("advances rngCursor on each call", () => {
+    const s0 = initialState("cursor-test");
+    const [v1, s1] = nextRng(s0);
+    const [v2, s2] = nextRng(s1);
+    expect(s1.meta.rngCursor).toBe(1);
+    expect(s2.meta.rngCursor).toBe(2);
+    expect(v1).not.toBe(v2);
+  });
+
+  it("produces deterministic values for a given seed and cursor", () => {
+    const s0 = initialState("det-test");
+    const [v1a] = nextRng(s0);
+    const [v1b] = nextRng(s0);
+    expect(v1a).toBe(v1b); // same cursor position → same value
   });
 });

@@ -26,6 +26,8 @@ export function loadRun(): GameState | null {
   }
 }
 
+const CURRENT_VERSION = 1;
+
 function isValidSave(v: unknown): boolean {
   if (typeof v !== "object" || v === null) return false;
   const obj = v as Record<string, unknown>;
@@ -33,7 +35,8 @@ function isValidSave(v: unknown): boolean {
     typeof obj["scene"] === "string" &&
     typeof obj["meta"] === "object" &&
     obj["meta"] !== null &&
-    typeof (obj["meta"] as Record<string, unknown>)["seed"] === "string"
+    typeof (obj["meta"] as Record<string, unknown>)["seed"] === "string" &&
+    obj["version"] === CURRENT_VERSION
   );
 }
 

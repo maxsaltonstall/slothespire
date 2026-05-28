@@ -43,6 +43,7 @@ describe("initialState", () => {
     expect(s.combat).toBeUndefined();
     expect(s.deck).toEqual([]);
     expect(s.credits).toBe(0);
+    expect(s.version).toBe(1);
     expect(s.history).toEqual([]);
   });
 

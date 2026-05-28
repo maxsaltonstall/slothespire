@@ -36,13 +36,6 @@ describe("reduce", () => {
     expect(s2.combat).toBeUndefined();
   });
 
-  it("LOAD_RUN replaces state wholesale", () => {
-    const s0 = initialState("seed-a");
-    const saved = initialState("seed-b");
-    const s1 = reduce(s0, { type: "LOAD_RUN", state: saved });
-    expect(s1.meta.seed).toBe("seed-b");
-  });
-
   it("reducer is total: unknown actions return same state reference", () => {
     const s0 = initialState("seed");
     const s1 = reduce(s0, { type: "NOT_A_REAL_ACTION" } as never);

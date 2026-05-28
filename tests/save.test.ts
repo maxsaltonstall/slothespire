@@ -27,6 +27,7 @@ describe("save", () => {
     expect(loaded).not.toBeNull();
     expect(loaded!.meta.seed).toBe("roundtrip");
     expect(loaded!.player.budget).toBe(80);
+    expect(loaded!.version).toBe(1);
   });
 
   it("loadRun returns null when the saved data is corrupt", () => {

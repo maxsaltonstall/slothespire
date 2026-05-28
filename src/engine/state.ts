@@ -80,6 +80,7 @@ export interface GameState {
   deck: Card[];
   credits: number;
   scene: Scene;
+  version: number;
   history: GameEvent[];
 }
 
@@ -119,6 +120,7 @@ export function initialState(seed: string): GameState {
     deck: [],
     credits: 0,
     scene: "title",
+    version: 1,
     history: [],
   };
 }

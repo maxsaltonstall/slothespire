@@ -29,8 +29,6 @@ export function reduce(state: GameState, action: Action): GameState {
       return { ...state, scene: "lost", combat: undefined };
     case "RETURN_TO_TITLE":
       return initialState(state.meta.seed);
-    case "LOAD_RUN":
-      return action.state;
     default:
       return state;
   }
