@@ -273,3 +273,86 @@ describe("PLAY_CARD with statuses", () => {
     expect(s2).toBe(s);
   });
 });
+
+describe("END_TURN with statuses", () => {
+  it("flow grants +1 energy at start of next turn and decays to 0", () => {
+    let s = startedRun();
+    s = applyStatus(s, "player", "flow", 1);
+    const enemy = s.combat!.enemies[0];
+    s = { ...s, combat: { ...s.combat!, intentByEnemy: { [enemy.instanceId]: { kind: "burn", amount: 0 } } } };
+    const s1 = reduce(s, { type: "END_TURN" });
+    expect(s1.player.energy).toBe(4); // 3 base + 1 flow
+    expect(s1.player.statuses.flow).toBeUndefined(); // decayed 1→0→removed
+  });
+
+  it("toil costs -1 energy at start of next turn and decays", () => {
+    let s = startedRun();
+    s = applyStatus(s, "player", "toil", 1);
+    const enemy = s.combat!.enemies[0];
+    s = { ...s, combat: { ...s.combat!, intentByEnemy: { [enemy.instanceId]: { kind: "burn", amount: 0 } } } };
+    const s1 = reduce(s, { type: "END_TURN" });
+    expect(s1.player.energy).toBe(2); // 3 base - 1 toil
+    expect(s1.player.statuses.toil).toBeUndefined();
+  });
+
+  it("on_call_fatigue drains 2×stacks budget at end of round and decays", () => {
+    let s = startedRun();
+    const enemy = s.combat!.enemies[0];
+    s = applyStatus(s, "player", "on_call_fatigue", 2);
+    s = { ...s, combat: { ...s.combat!, intentByEnemy: { [enemy.instanceId]: { kind: "burn", amount: 0 } } } };
+    const s1 = reduce(s, { type: "END_TURN" });
+    expect(s1.player.budget).toBe(80 - 4); // 2 stacks × 2 = 4
+    expect(s1.player.statuses.on_call_fatigue).toBe(1); // decayed 2→1
+  });
+
+  it("customer_facing on player amplifies enemy burn ×1.5 (ceil)", () => {
+    let s = startedRun();
+    const enemy = s.combat!.enemies[0];
+    s = applyStatus(s, "player", "customer_facing", 1);
+    s = { ...s, player: { ...s.player, headroom: 0 }, combat: { ...s.combat!, intentByEnemy: { [enemy.instanceId]: { kind: "burn", amount: 6 } } } };
+    const s1 = reduce(s, { type: "END_TURN" });
+    expect(s1.player.budget).toBe(80 - 9); // ceil(6 × 1.5) = 9
+    expect(s1.player.statuses.customer_facing).toBeUndefined(); // decayed 1→0→removed
+  });
+
+  it("power trigger fires at end of turn — Auto-Scaling grants headroom", () => {
+    let s = startedRun();
+    const powerCard = makeCard("auto_scaling");
+    s = { ...s, combat: { ...s.combat!, activePowers: [powerCard] } };
+    const enemy = s.combat!.enemies[0];
+    s = { ...s, combat: { ...s.combat!, intentByEnemy: { [enemy.instanceId]: { kind: "burn", amount: 0 } } } };
+    const s1 = reduce(s, { type: "END_TURN" });
+    // headroom resets to 0 after enemy turn (Phase 4), then power fires (Phase 10) granting +4
+    expect(s1.player.headroom).toBe(4);
+  });
+
+  it("curse in hand causes self-burn at end of turn", () => {
+    let s = startedRun();
+    const curse = makeCard("tech_debt");
+    // Replace entire hand with just the curse
+    s = { ...s, player: { ...s.player, hand: [curse] } };
+    const enemy = s.combat!.enemies[0];
+    s = { ...s, combat: { ...s.combat!, intentByEnemy: { [enemy.instanceId]: { kind: "burn", amount: 0 } } } };
+    const s1 = reduce(s, { type: "END_TURN" });
+    expect(s1.player.budget).toBe(80 - 2); // 1 curse × selfBurn 2
+  });
+
+  it("all decaying statuses tick down by 1 each round", () => {
+    let s = startedRun();
+    const enemy = s.combat!.enemies[0];
+    s = applyStatus(s, "player", "toil", 2);
+    s = applyStatus(s, "player", "customer_facing", 3);
+    s = { ...s, combat: { ...s.combat!, intentByEnemy: { [enemy.instanceId]: { kind: "burn", amount: 0 } } } };
+    const s1 = reduce(s, { type: "END_TURN" });
+    expect(s1.player.statuses.toil).toBe(1);
+    expect(s1.player.statuses.customer_facing).toBe(2);
+  });
+
+  it("enemy debuff intent applies status to player", () => {
+    let s = startedRun();
+    const enemy = s.combat!.enemies[0];
+    s = { ...s, combat: { ...s.combat!, intentByEnemy: { [enemy.instanceId]: { kind: "debuff", status: "toil", stacks: 1 } } } };
+    const s1 = reduce(s, { type: "END_TURN" });
+    expect(s1.player.statuses.toil).toBe(1);
+  });
+});

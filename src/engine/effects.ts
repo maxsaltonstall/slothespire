@@ -103,10 +103,10 @@ export function consumeStatus(
   return { ...state, combat: { ...state.combat, enemies } };
 }
 
-export function tickStatuses(statuses: StatusMap): StatusMap {
+export function tickStatuses(statuses: StatusMap, eligibleKeys?: Set<StatusId>): StatusMap {
   const result: StatusMap = { ...statuses };
   for (const id of DECAYING_STATUSES) {
-    if (result[id] !== undefined) {
+    if (result[id] !== undefined && (eligibleKeys === undefined || eligibleKeys.has(id))) {
       const next = (result[id] as number) - 1;
       if (next <= 0) delete result[id];
       else result[id] = next;
