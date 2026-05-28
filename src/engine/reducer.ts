@@ -102,6 +102,10 @@ export function reduce(state: GameState, action: Action): GameState {
         }
       }
 
+      // Headroom always resets at end of enemy turn regardless of intent type
+      s = { ...s, player: { ...s.player, headroom: 0 } };
+
+      // Step 3: loss check after enemy turn
       if (s.player.budget <= 0) {
         return { ...s, scene: "lost", combat: undefined };
       }

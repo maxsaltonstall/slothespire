@@ -171,4 +171,21 @@ describe("END_TURN", () => {
     expect(s1.scene).toBe("lost");
     expect(s1.combat).toBeUndefined();
   });
+
+  it("headroom resets to 0 even when enemy intent is not burn", () => {
+    let s0 = startedRun();
+    const enemy = s0.combat!.enemies[0];
+    // Give player some headroom and set a non-burn intent
+    s0 = {
+      ...s0,
+      player: { ...s0.player, headroom: 8 },
+      combat: {
+        ...s0.combat!,
+        intentByEnemy: { [enemy.instanceId]: { kind: "unknown" } },
+      },
+    };
+    const s1 = reduce(s0, { type: "END_TURN" });
+    expect(s1.player.headroom).toBe(0); // always resets
+    expect(s1.player.budget).toBe(80);  // budget unchanged (no burn)
+  });
 });
