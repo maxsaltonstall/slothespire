@@ -596,6 +596,12 @@ export function reduce(state: GameState, action: Action): GameState {
       };
     }
 
+    case "GO_TO_CODEX":
+      return { ...state, scene: "codex", codexReturnScene: action.returnScene };
+
+    case "CLOSE_CODEX":
+      return { ...state, scene: state.codexReturnScene ?? "map", codexReturnScene: undefined };
+
     default:
       return state;
   }

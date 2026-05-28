@@ -7,6 +7,7 @@ export type Scene =
   | "rest"
   | "event"
   | "codex"
+  | "upgrading"
   | "won"
   | "lost";
 
@@ -88,6 +89,7 @@ export interface GameState {
   rewardCards?: Card[];
   shopCards?: Card[];
   rewardRelic?: string;
+  codexReturnScene?: "map" | "title";
 }
 
 function makeRunId(): string {

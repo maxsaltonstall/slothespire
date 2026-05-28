@@ -10,6 +10,7 @@ import { renderReward } from "./ui/scene-reward";
 import { renderRest } from "./ui/scene-rest";
 import { renderEvent } from "./ui/scene-event";
 import { renderShop } from "./ui/scene-shop";
+import * as codex from "./engine/codex";
 
 const root = document.getElementById("app");
 if (!root) throw new Error("missing #app root");
@@ -26,6 +27,15 @@ function dispatch(action: Action): void {
     clearRun();
   } else {
     saveRun(state);
+  }
+
+  // Fire codex unlocks based on current state
+  for (const c of state.player.hand) codex.unlock(c.defId);
+  for (const c of state.rewardCards ?? []) codex.unlock(c.defId);
+  if (state.rewardRelic) codex.unlock(state.rewardRelic);
+  for (const r of state.player.relics) codex.unlock(r);
+  if (state.combat) {
+    for (const e of state.combat.enemies) codex.unlock(e.defId);
   }
 
   render();

@@ -14,4 +14,8 @@ export type Action =
   | { type: "LOAD_RUN"; state: GameState }
   | { type: "REMOVE_CARD"; cardInstanceId: string }
   | { type: "BUY_CARD"; cardInstanceId: string }
-  | { type: "PICK_REWARD_RELIC" };
+  | { type: "PICK_REWARD_RELIC" }
+  | { type: "GO_TO_CODEX"; returnScene: "map" | "title" }
+  | { type: "CLOSE_CODEX" }
+  | { type: "SHOW_UPGRADE_PICKER" }
+  | { type: "CHOOSE_CARD_TO_UPGRADE"; cardInstanceId: string };
