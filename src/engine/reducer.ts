@@ -144,6 +144,10 @@ export function reduce(state: GameState, action: Action): GameState {
         enemies.map(e => [e.instanceId, new Set(Object.keys(e.statuses) as StatusId[])])
       );
 
+      // Capture flow/toil from pre-enemy-action snapshot (avoid double-punishing Toil applied this turn)
+      const flowBonus = s.player.statuses.flow ?? 0;
+      const toilCost = s.player.statuses.toil ?? 0;
+
       // Phase 3: Enemy actions
       for (const enemy of enemies) {
         const intent = intentByEnemy[enemy.instanceId];
@@ -179,10 +183,6 @@ export function reduce(state: GameState, action: Action): GameState {
         s = { ...s, player: { ...s.player, budget: s.player.budget - fatigue * 2 } };
         if (s.player.budget <= 0) return { ...s, scene: "lost", combat: undefined };
       }
-
-      // Read flow/toil BEFORE tick (they influence next turn's energy)
-      const flowBonus = s.player.statuses.flow ?? 0;
-      const toilCost = s.player.statuses.toil ?? 0;
 
       // Phase 7: Tick all decaying statuses (player + each enemy)
       // Only tick statuses that existed before Phase 3 — newly applied debuffs survive until next round
