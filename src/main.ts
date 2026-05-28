@@ -8,7 +8,7 @@ import { renderEnd } from "./ui/scene-end";
 import { renderMap } from "./ui/scene-map";
 import { renderReward } from "./ui/scene-reward";
 import { renderRest } from "./ui/scene-rest";
-import { renderEvent } from "./ui/scene-event";
+import { renderEvent, renderEventOutcome } from "./ui/scene-event";
 import { renderShop } from "./ui/scene-shop";
 import { renderCodex } from "./ui/scene-codex";
 import { renderUpgrading } from "./ui/scene-upgrading";
@@ -54,7 +54,8 @@ function sceneFor(s: GameState): HTMLElement {
     case "combat": return renderCombat(s, dispatch);
     case "reward": return renderReward(s, dispatch);
     case "rest":   return renderRest(s, dispatch);
-    case "event":  return renderEvent(s, dispatch);
+    case "event":         return renderEvent(s, dispatch);
+    case "event_outcome": return renderEventOutcome(s, dispatch);
     case "shop":   return renderShop(s, dispatch);
     case "codex":     return renderCodex(s, dispatch);
     case "upgrading": return renderUpgrading(s, dispatch);

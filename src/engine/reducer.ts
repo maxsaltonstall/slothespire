@@ -527,13 +527,17 @@ export function reduce(state: GameState, action: Action): GameState {
       const choice = event.choices[action.choiceIndex];
       if (!choice) return { ...state, scene: "map", currentEventId: undefined };
 
-      let s: GameState = { ...state, currentEventId: undefined };
+      // Keep currentEventId so the outcome screen can show the event title
+      let s: GameState = { ...state };
       const { outcome } = choice;
+      let outcomeText = "";
 
       if (outcome.kind === "gainCredits") {
         s = { ...s, credits: s.credits + outcome.amount };
+        outcomeText = `+${outcome.amount} credits.`;
       } else if (outcome.kind === "loseCredits") {
         s = { ...s, credits: Math.max(0, s.credits - outcome.amount) };
+        outcomeText = `-${outcome.amount} credits.`;
       } else if (outcome.kind === "loseMaxBudget") {
         const newMax = s.player.maxBudget - outcome.amount;
         s = {
@@ -544,19 +548,25 @@ export function reduce(state: GameState, action: Action): GameState {
             budget: Math.min(s.player.budget, newMax),
           },
         };
+        outcomeText = `Maximum SLO Budget reduced by ${outcome.amount}. You can feel it.`;
       } else if (outcome.kind === "addCurse") {
         s = { ...s, deck: [...s.deck, makeCard("tech_debt")] };
+        outcomeText = "A Tech Debt curse was added to your deck. It will haunt you.";
       } else if (outcome.kind === "gainCard") {
         const [cards, newState] = generateCardReward(s, 1, outcome.rarity);
         s = { ...newState, deck: [...newState.deck, ...cards] };
+        const cardName = cards[0]?.name ?? "a card";
+        outcomeText = `${cardName} was added to your deck.`;
+      } else {
+        // "nothing"
+        outcomeText = "Nothing changes. You move on.";
       }
-      // "nothing": no changes
 
-      return { ...s, scene: "map" };
+      return { ...s, scene: "event_outcome", eventOutcomeText: outcomeText };
     }
 
     case "GO_TO_MAP":
-      return { ...state, scene: "map" };
+      return { ...state, scene: "map", eventOutcomeText: undefined, currentEventId: undefined };
 
     case "LOAD_RUN":
       return action.state;

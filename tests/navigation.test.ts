@@ -136,14 +136,14 @@ describe("CHOOSE_REST_OPTION", () => {
 });
 
 describe("EVENT_CHOICE", () => {
-  it("gainCredits outcome adds credits and returns to 'map'", () => {
+  it("gainCredits outcome adds credits and transitions to 'event_outcome'", () => {
     let s = newRun();
     // untested_migration choice 0 = gainCredits 50
     s = { ...s, scene: "event", currentEventId: "untested_migration", credits: 0 };
     const s2 = reduce(s, { type: "EVENT_CHOICE", choiceIndex: 0 });
     expect(s2.credits).toBe(50);
-    expect(s2.scene).toBe("map");
-    expect(s2.currentEventId).toBeUndefined();
+    expect(s2.scene).toBe("event_outcome");
+    expect(s2.eventOutcomeText).toBe("+50 credits.");
   });
 
   it("addCurse outcome adds Tech Debt to deck", () => {

@@ -6,6 +6,7 @@ export type Scene =
   | "shop"
   | "rest"
   | "event"
+  | "event_outcome"
   | "codex"
   | "upgrading"
   | "won"
@@ -90,6 +91,7 @@ export interface GameState {
   shopCards?: Card[];
   rewardRelic?: string;
   codexReturnScene?: "map" | "title" | "combat";
+  eventOutcomeText?: string;    // shown on event_outcome screen before returning to map
 }
 
 function makeRunId(): string {
