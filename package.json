@@ -10,7 +10,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "sim": "tsx scripts/sim.ts",
-    "deploy": "npm run build && npx gh-pages -d dist --dotfiles"
+    "deploy": "npm run build && npx gh-pages -d dist --dotfiles --repo https://github.com/maxsaltonstall/slothespire.git"
   },
   "devDependencies": {
     "@types/node": "^20.12.0",
