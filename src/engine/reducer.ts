@@ -637,6 +637,9 @@ export function reduce(state: GameState, action: Action): GameState {
       };
     }
 
+    case "GO_TO_ACHIEVEMENTS":
+      return { ...state, scene: "achievements" };
+
     case "BUY_HOTFIX": {
       if (state.credits < 60) return state;
       if (state.player.hotfixes.length >= 3) return state;

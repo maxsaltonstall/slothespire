@@ -104,3 +104,24 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: 1px; }
   animation: float-up 0.62s ease-out forwards;
   text-shadow: 0 0 10px currentColor;
 }
+
+/* Achievement toast */
+@keyframes toast-slide {
+  0%   { transform: translateX(110%); opacity: 0; }
+  12%  { transform: translateX(0);    opacity: 1; }
+  80%  { transform: translateX(0);    opacity: 1; }
+  100% { transform: translateX(110%); opacity: 0; }
+}
+.achievement-toast {
+  position: fixed; bottom: 56px; right: 16px; z-index: 10000;
+  background: var(--color-base-deep); border: 1px solid var(--color-energy);
+  box-shadow: 0 0 18px rgba(255, 211, 77, 0.4);
+  padding: 10px 16px; border-radius: 6px;
+  display: flex; align-items: center; gap: 10px;
+  animation: toast-slide 3.8s ease forwards;
+  pointer-events: none; max-width: 260px;
+}
+.at-icon { font-size: 24px; }
+.at-body { font-family: var(--font-display); }
+.at-label { font-size: 8px; letter-spacing: 2px; color: var(--color-energy); opacity: 0.8; }
+.at-name  { font-size: 13px; color: var(--color-text); letter-spacing: 1px; }

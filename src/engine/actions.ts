@@ -19,4 +19,5 @@ export type Action =
   | { type: "CLOSE_CODEX" }
   | { type: "SHOW_UPGRADE_PICKER" }
   | { type: "CHOOSE_CARD_TO_UPGRADE"; cardInstanceId: string }
-  | { type: "BUY_HOTFIX"; hotfixId: string };
+  | { type: "BUY_HOTFIX"; hotfixId: string }
+  | { type: "GO_TO_ACHIEVEMENTS" };

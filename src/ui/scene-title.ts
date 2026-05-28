@@ -2,6 +2,7 @@ import type { GameState } from "../engine/state";
 import type { Action } from "../engine/actions";
 import { loadRun } from "../engine/save";
 import { isMuted, toggleMute, sfx } from "./sfx";
+import { allUnlocked, ACHIEVEMENT_DEFS } from "../engine/achievements";
 
 export function renderTitle(
   _state: GameState,
@@ -55,6 +56,7 @@ export function renderTitle(
         ? '<button data-action="continue">CONTINUE</button>'
         : '<button data-action="continue" disabled title="No saved run">CONTINUE</button>'}
       <button data-action="codex">CODEX</button>
+      <button data-action="achievements">ACHIEVEMENTS (${allUnlocked().length}/${ACHIEVEMENT_DEFS.length})</button>
       <button data-action="settings" disabled title="Coming in M9">SETTINGS</button>
     </div>
     <div class="title-controls">
@@ -68,6 +70,9 @@ export function renderTitle(
 
   root.querySelector<HTMLButtonElement>('[data-action="codex"]')!
     .addEventListener("click", () => { sfx.uiClick(); dispatch({ type: "GO_TO_CODEX", returnScene: "title" }); });
+
+  root.querySelector<HTMLButtonElement>('[data-action="achievements"]')!
+    .addEventListener("click", () => { sfx.uiClick(); dispatch({ type: "GO_TO_ACHIEVEMENTS" }); });
 
   const continueBtn = root.querySelector<HTMLButtonElement>('[data-action="continue"]');
   if (continueBtn && !continueBtn.disabled) {

@@ -9,6 +9,7 @@ export type Scene =
   | "event_outcome"
   | "codex"
   | "upgrading"
+  | "achievements"
   | "won"
   | "lost";
 
