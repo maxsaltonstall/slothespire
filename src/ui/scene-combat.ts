@@ -2,6 +2,7 @@ import type { GameState, Card, Intent } from "../engine/state";
 import type { Action } from "../engine/actions";
 import { CARD_DEFS } from "../content/cards";
 import { HOTFIX_DEFS } from "../content/hotfixes";
+import { getIntent } from "../content/enemies";
 
 function intentLabel(intent: Intent | undefined): { icon: string; text: string; colorClass: string } {
   if (!intent) return { icon: "?", text: "Unknown", colorClass: "intent-unknown" };
@@ -71,9 +72,19 @@ export function renderCombat(state: GameState, dispatch: (a: Action) => void): H
       .filter(([, v]) => (v ?? 0) > 0)
       .map(([id, v]) => `<span class="sc-status-pill">${id.replace(/_/g, " ")} ${v}</span>`)
       .join("");
+    const observabilityStacks = state.player.statuses.observability ?? 0;
+    const futureIntentsHtml = observabilityStacks > 0
+      ? Array.from({ length: Math.min(observabilityStacks, 3) }, (_, i) => {
+          const futureTurn = state.combat!.turn + i;
+          const futureIntent = getIntent(enemy.defId, futureTurn);
+          const { icon: fIcon, text: fText } = intentLabel(futureIntent);
+          return `<div class="sc-intent-future" title="Turn +${i + 1}">${fIcon} ${fText}</div>`;
+        }).join("")
+      : "";
     return `
       <div class="sc-enemy" data-enemy-id="${enemy.instanceId}">
         <div class="sc-intent ${colorClass}">${icon} ${text}</div>
+        ${futureIntentsHtml}
         <div class="sc-sprite">▲</div>
         <div class="sc-enemy-name">${enemy.name}</div>
         <div class="sc-stab-bar"><div class="sc-stab-fill" style="width:${stabPct}%"></div></div>
@@ -148,6 +159,11 @@ export function renderCombat(state: GameState, dispatch: (a: Action) => void): H
       .intent-debuff { color: var(--color-pop); text-shadow: var(--glow-pop); }
       .intent-multi  { color: #c1f4e8; }
       .intent-unknown{ color: var(--color-text-dim); }
+      .sc-intent-future {
+        font-family: var(--font-display); font-size: 9px; padding: 2px 6px;
+        opacity: 0.45; color: var(--color-text-dim); letter-spacing: 0.5px;
+        font-style: italic;
+      }
       .sc-sprite {
         width: 80px; height: 80px; margin: 0 auto;
         background: var(--color-border-low); border: 1px solid var(--color-pop);
