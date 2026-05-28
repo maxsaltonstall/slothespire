@@ -44,7 +44,7 @@ export function renderTitle(
       ${hasSave
         ? '<button data-action="continue">CONTINUE</button>'
         : '<button data-action="continue" disabled title="No saved run">CONTINUE</button>'}
-      <button data-action="codex" disabled title="Coming in M6">CODEX</button>
+      <button data-action="codex">CODEX</button>
       <button data-action="settings" disabled title="Coming in M9">SETTINGS</button>
     </div>
     <div class="stamp">v0.0.1 — M1 walking skeleton</div>
@@ -52,6 +52,9 @@ export function renderTitle(
 
   root.querySelector<HTMLButtonElement>('[data-action="new-run"]')!
     .addEventListener("click", () => dispatch({ type: "START_RUN" }));
+
+  root.querySelector<HTMLButtonElement>('[data-action="codex"]')!
+    .addEventListener("click", () => dispatch({ type: "GO_TO_CODEX", returnScene: "title" }));
 
   const continueBtn = root.querySelector<HTMLButtonElement>('[data-action="continue"]');
   if (continueBtn && !continueBtn.disabled) {
