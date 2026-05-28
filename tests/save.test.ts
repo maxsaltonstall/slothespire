@@ -34,6 +34,12 @@ describe("save", () => {
     expect(loadRun()).toBeNull();
   });
 
+  it("loadRun clears corrupt data from localStorage after failed parse", () => {
+    localStorage.setItem(SAVE_KEY, "{not json");
+    loadRun(); // returns null
+    expect(localStorage.getItem(SAVE_KEY)).toBeNull();
+  });
+
   it("clearRun removes the saved state", () => {
     const s = initialState("clear-test");
     saveRun(s);
