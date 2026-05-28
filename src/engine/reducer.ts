@@ -491,7 +491,7 @@ export function reduce(state: GameState, action: Action): GameState {
       if (action.option === "refresh") {
         const healed = Math.min(
           state.player.maxBudget,
-          state.player.budget + Math.floor(state.player.maxBudget * 0.3)
+          state.player.budget + Math.floor(state.player.maxBudget * 0.2)
         );
         return { ...state, scene: "map", player: { ...state.player, budget: healed } };
       }

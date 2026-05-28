@@ -117,11 +117,11 @@ describe("PICK_REWARD_CARD", () => {
 });
 
 describe("CHOOSE_REST_OPTION", () => {
-  it("refresh restores 30% of max budget (capped at max)", () => {
+  it("refresh restores 20% of max budget (capped at max)", () => {
     let s = newRun();
     s = { ...s, player: { ...s.player, budget: 40, maxBudget: 80 }, scene: "rest" };
     const s2 = reduce(s, { type: "CHOOSE_REST_OPTION", option: "refresh" });
-    expect(s2.player.budget).toBe(64); // 40 + floor(80 × 0.3) = 40 + 24 = 64
+    expect(s2.player.budget).toBe(56); // 40 + floor(80 × 0.2) = 40 + 16 = 56
     expect(s2.scene).toBe("map");
   });
 

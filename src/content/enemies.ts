@@ -20,7 +20,7 @@ export const ENEMY_DEFS: Record<string, EnemyDef> = {
   memory_leak: {
     id: "memory_leak",
     name: "Memory Leak",
-    stability: 28,
+    stability: 36,
     intentPattern: [
       { kind: "buff" as const, status: "pressure" as const, stacks: 1 },
       { kind: "burn" as const, amount: 8 },
@@ -40,11 +40,11 @@ export const ENEMY_DEFS: Record<string, EnemyDef> = {
   the_pager_storm: {
     id: "the_pager_storm",
     name: "The Pager Storm",
-    stability: 60,
+    stability: 75,
     intentPattern: [
       { kind: "burn" as const, amount: 10 },
       { kind: "debuff" as const, status: "on_call_fatigue" as const, stacks: 1 },
-      { kind: "burn" as const, amount: 14 },
+      { kind: "burn" as const, amount: 18 },
       { kind: "buff" as const, status: "pressure" as const, stacks: 2 },
     ],
   },
@@ -78,7 +78,7 @@ export const ENEMY_DEFS: Record<string, EnemyDef> = {
     ],
   },
   cascading_failure: {
-    id: "cascading_failure", name: "Cascading Failure", stability: 40,
+    id: "cascading_failure", name: "Cascading Failure", stability: 55,
     intentPattern: [
       { kind: "burn" as const, amount: 8 },
       { kind: "buff" as const, status: "pressure" as const, stacks: 1 },
@@ -87,12 +87,19 @@ export const ENEMY_DEFS: Record<string, EnemyDef> = {
     ],
   },
   total_outage: {
-    id: "total_outage", name: "Total Outage", stability: 80,
+    id: "total_outage", name: "Total Outage", stability: 100,
     intentPattern: [
-      { kind: "burn" as const, amount: 12 },
+      { kind: "burn" as const, amount: 14 },
       { kind: "debuff" as const, status: "customer_facing" as const, stacks: 2 },
-      { kind: "burn" as const, amount: 18 },
+      { kind: "burn" as const, amount: 24 },
       { kind: "buff" as const, status: "pressure" as const, stacks: 3 },
+    ],
+  },
+  deadlock: {
+    id: "deadlock", name: "Deadlock", stability: 30,
+    intentPattern: [
+      { kind: "debuff" as const, status: "toil" as const, stacks: 2 },
+      { kind: "burn" as const, amount: 10 },
     ],
   },
 };
@@ -107,9 +114,9 @@ const ENEMY_POOL: Record<string, string[]> = {
   "1-boss": ["the_pager_storm"],
   "2-0": ["zombie_process", "stale_cache"],
   "2-1": ["memory_leak", "misconfigured_tls"],
-  "2-2": ["cron_storm", "memory_leak"],
-  "2-3": ["zombie_process", "misconfigured_tls"],
-  "2-4": ["memory_leak", "cron_storm"],
+  "2-2": ["deadlock", "memory_leak"],
+  "2-3": ["zombie_process", "deadlock"],
+  "2-4": ["memory_leak", "deadlock"],
   "2-elite": ["cascading_failure"],
   "2-boss": ["total_outage"],
 };

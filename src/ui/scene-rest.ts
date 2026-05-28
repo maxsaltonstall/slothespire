@@ -4,7 +4,7 @@ import type { Action } from "../engine/actions";
 export function renderRest(state: GameState, dispatch: (a: Action) => void): HTMLElement {
   const root = document.createElement("div");
   root.className = "scene-rest";
-  const healAmount = Math.floor(state.player.maxBudget * 0.3);
+  const healAmount = Math.floor(state.player.maxBudget * 0.2);
   const wouldHeal = Math.min(state.player.maxBudget, state.player.budget + healAmount) - state.player.budget;
   const firstUpgradable = state.deck.find(c => !c.upgraded);
 
@@ -32,7 +32,7 @@ export function renderRest(state: GameState, dispatch: (a: Action) => void): HTM
     <div class="rest-choices">
       <div class="rest-choice" data-option="refresh">
         <h3>Window Refresh</h3>
-        <p>Restore +${wouldHeal} SLO Budget<br>(30% of max)</p>
+        <p>Restore +${wouldHeal} SLO Budget<br>(20% of max)</p>
       </div>
       <div class="rest-choice ${firstUpgradable ? "" : "disabled"}" data-option="upgrade">
         <h3>Upgrade</h3>
