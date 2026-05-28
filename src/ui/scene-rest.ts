@@ -42,9 +42,13 @@ export function renderRest(state: GameState, dispatch: (a: Action) => void): HTM
   `;
 
   root.querySelectorAll<HTMLDivElement>(".rest-choice:not(.disabled)").forEach(el => {
-    el.addEventListener("click", () =>
-      dispatch({ type: "CHOOSE_REST_OPTION", option: el.dataset.option as "refresh" | "upgrade" })
-    );
+    el.addEventListener("click", () => {
+      if (el.dataset.option === "upgrade") {
+        dispatch({ type: "SHOW_UPGRADE_PICKER" });
+      } else {
+        dispatch({ type: "CHOOSE_REST_OPTION", option: "refresh" });
+      }
+    });
   });
 
   return root;

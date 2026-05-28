@@ -602,6 +602,24 @@ export function reduce(state: GameState, action: Action): GameState {
     case "CLOSE_CODEX":
       return { ...state, scene: state.codexReturnScene ?? "map", codexReturnScene: undefined };
 
+    case "SHOW_UPGRADE_PICKER": {
+      const hasUpgradeable = state.deck.some(c => !c.upgraded && c.type !== "curse");
+      if (!hasUpgradeable) return { ...state, scene: "map" };
+      return { ...state, scene: "upgrading" };
+    }
+
+    case "CHOOSE_CARD_TO_UPGRADE": {
+      const idx = state.deck.findIndex(c => c.instanceId === action.cardInstanceId);
+      if (idx === -1) return state;
+      const card = state.deck[idx];
+      const upgraded = { ...card, upgraded: true, name: card.name.replace(/\+$/, "") + "+" };
+      return {
+        ...state,
+        scene: "map",
+        deck: [...state.deck.slice(0, idx), upgraded, ...state.deck.slice(idx + 1)],
+      };
+    }
+
     default:
       return state;
   }

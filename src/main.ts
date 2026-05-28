@@ -11,6 +11,7 @@ import { renderRest } from "./ui/scene-rest";
 import { renderEvent } from "./ui/scene-event";
 import { renderShop } from "./ui/scene-shop";
 import { renderCodex } from "./ui/scene-codex";
+import { renderUpgrading } from "./ui/scene-upgrading";
 import * as codex from "./engine/codex";
 
 const root = document.getElementById("app");
@@ -56,7 +57,7 @@ function sceneFor(s: GameState): HTMLElement {
     case "event":  return renderEvent(s, dispatch);
     case "shop":   return renderShop(s, dispatch);
     case "codex":     return renderCodex(s, dispatch);
-    case "upgrading": return renderTitle(s, dispatch);  // placeholder until Task 6
+    case "upgrading": return renderUpgrading(s, dispatch);
     case "lost":
     case "won":    return renderEnd(s, dispatch);
   }
