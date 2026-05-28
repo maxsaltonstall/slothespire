@@ -121,6 +121,40 @@ export const RELIC_DEFS: Record<string, RelicDef> = {
     flavor: "Always-on performance visibility.",
     onCombatStart: (s) => applyStatus(s, "player", "pressure", 1),
   },
+  network_performance_monitoring: {
+    id: "network_performance_monitoring", name: "Network Performance Monitoring", product: "Datadog NPM",
+    description: "At start of combat, gain 3 Headroom per relic you own.",
+    flavor: "See every byte. Block every threat.",
+    onCombatStart: (s) => addHeadroom(s, Math.min(s.player.relics.length * 3, 18)),
+  },
+  bits_the_dog: {
+    id: "bits_the_dog", name: "Bits the Dog", product: "Datadog Mascot",
+    description: "At start of combat, restore 8 Budget.",
+    flavor: "A good boy. Definitely not a monitoring agent in disguise.",
+    onCombatStart: (s) => ({
+      ...s,
+      player: { ...s.player, budget: Math.min(s.player.maxBudget, s.player.budget + 8) },
+    }),
+  },
+  session_replay: {
+    id: "session_replay", name: "Session Replay", product: "Datadog Session Replay",
+    description: "At start of every 3rd turn, draw 1 extra card.",
+    flavor: "Watch exactly how the user reproduced the bug.",
+    onTurnStart: (s) =>
+      s.combat && s.combat.turn % 3 === 0 ? drawCards(s, 1) : s,
+  },
+  llm_observability: {
+    id: "llm_observability", name: "LLM Observability", product: "Datadog LLM Observability",
+    description: "At start of combat, gain Observability 3.",
+    flavor: "Trace every token. Measure every inference.",
+    onCombatStart: (s) => applyStatus(s, "player", "observability", 3),
+  },
+  audit_trail: {
+    id: "audit_trail", name: "Audit Trail", product: "Datadog Audit Trail",
+    description: "At start of combat, gain Confidence 1 and Observability 1.",
+    flavor: "Every action logged. Every anomaly surfaced.",
+    onCombatStart: (s) => applyStatus(applyStatus(s, "player", "confidence", 1), "player", "observability", 1),
+  },
 };
 
 export const RELIC_POOL = Object.keys(RELIC_DEFS).filter(id => id !== "pager");
