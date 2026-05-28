@@ -1,6 +1,7 @@
 import type { GameState } from "../engine/state";
 import type { Action } from "../engine/actions";
 import { loadRun } from "../engine/save";
+import { isMuted, toggleMute, sfx } from "./sfx";
 
 export function renderTitle(
   _state: GameState,
@@ -36,6 +37,15 @@ export function renderTitle(
         font-family: var(--font-display); font-size: 10px;
         color: var(--color-text-dim);
       }
+      .title-controls {
+        position: fixed; bottom: 8px; left: 12px;
+      }
+      .mute-btn {
+        background: transparent; border: 0; box-shadow: none;
+        font-size: 18px; cursor: pointer; padding: 4px; opacity: 0.6;
+        transition: opacity 0.1s;
+      }
+      .mute-btn:hover { opacity: 1; transform: none; }
     </style>
     <h1>SLOTHESPIRE</h1>
     <div class="subtitle">// SLO the Spire</div>
@@ -47,22 +57,33 @@ export function renderTitle(
       <button data-action="codex">CODEX</button>
       <button data-action="settings" disabled title="Coming in M9">SETTINGS</button>
     </div>
+    <div class="title-controls">
+      <button data-action="mute" class="mute-btn" title="Toggle sound">${isMuted() ? "🔇" : "🔊"}</button>
+    </div>
     <div class="stamp">v1.0.0</div>
   `;
 
   root.querySelector<HTMLButtonElement>('[data-action="new-run"]')!
-    .addEventListener("click", () => dispatch({ type: "START_RUN" }));
+    .addEventListener("click", () => { sfx.uiClick(); dispatch({ type: "START_RUN" }); });
 
   root.querySelector<HTMLButtonElement>('[data-action="codex"]')!
-    .addEventListener("click", () => dispatch({ type: "GO_TO_CODEX", returnScene: "title" }));
+    .addEventListener("click", () => { sfx.uiClick(); dispatch({ type: "GO_TO_CODEX", returnScene: "title" }); });
 
   const continueBtn = root.querySelector<HTMLButtonElement>('[data-action="continue"]');
   if (continueBtn && !continueBtn.disabled) {
     continueBtn.addEventListener("click", () => {
+      sfx.uiClick();
       const saved = loadRun();
       if (saved) dispatch({ type: "LOAD_RUN", state: saved });
     });
   }
+
+  root.querySelector<HTMLButtonElement>('[data-action="mute"]')!
+    .addEventListener("click", (e) => {
+      const muted = toggleMute();
+      (e.currentTarget as HTMLButtonElement).textContent = muted ? "🔇" : "🔊";
+      if (!muted) sfx.uiClick();
+    });
 
   return root;
 }

@@ -15,6 +15,7 @@ import { renderUpgrading } from "./ui/scene-upgrading";
 import * as codex from "./engine/codex";
 import { animateAttack, animateDefend } from "./ui/animations";
 import { CARD_DEFS } from "./content/cards";
+import { sfx } from "./ui/sfx";
 
 const root = document.getElementById("app");
 if (!root) throw new Error("missing #app root");
@@ -52,9 +53,66 @@ function dispatch(action: Action): void {
     for (const e of state.combat.enemies) codex.unlock(e.defId);
   }
 
+  // Sound effects
+  triggerSfx(action, prevState, state);
+
   // Trigger combat animation on current DOM, then delay re-render so it plays out
   const animDelay = triggerCombatAnimation(action, prevState, state);
   scheduleRender(animDelay);
+}
+
+function triggerSfx(action: Action, prev: GameState, next: GameState): void {
+  switch (action.type) {
+    case "PLAY_CARD": {
+      const card = prev.player.hand.find(c => c.instanceId === action.cardInstanceId);
+      if (!card) break;
+      sfx.cardPlay();
+      if (card.type === "attack") {
+        // attackHit fires slightly after the card whoosh (visual impact timing)
+        setTimeout(() => sfx.attackHit(), 80);
+      } else if (card.type === "skill" || card.type === "power") {
+        const def = CARD_DEFS[card.defId];
+        const hasHeadroom = def?.effects.some(e => e.kind === "headroom") ||
+                             def?.upgradedEffects?.some(e => e.kind === "headroom");
+        if (hasHeadroom) setTimeout(() => sfx.defend(), 60);
+      }
+      break;
+    }
+    case "END_TURN": {
+      sfx.endTurn();
+      // If budget dropped this turn, play drain sound
+      if (next.player.budget < prev.player.budget) {
+        setTimeout(() => sfx.budgetDrain(), 180);
+      }
+      break;
+    }
+    case "USE_HOTFIX":
+      sfx.cardPlay();
+      break;
+    case "NAVIGATE":
+      sfx.navigate();
+      break;
+    case "PICK_REWARD_CARD":
+      if (action.cardInstanceId) sfx.cardPick();
+      break;
+    case "PICK_REWARD_RELIC":
+      sfx.relicChime();
+      break;
+    case "CHOOSE_REST_OPTION":
+      if (action.option === "refresh") sfx.heal();
+      break;
+    case "BUY_CARD":
+    case "BUY_HOTFIX":
+      sfx.cardPick();
+      break;
+  }
+  // Scene transition sounds (fires regardless of action type)
+  if (prev.scene !== "won" && next.scene === "won") sfx.victory();
+  if (prev.scene !== "lost" && next.scene === "lost") sfx.defeat();
+  if (prev.scene !== "reward" && next.scene === "reward") {
+    // Small chime on reaching reward screen
+    setTimeout(() => sfx.cardPick(), 50);
+  }
 }
 
 function triggerCombatAnimation(

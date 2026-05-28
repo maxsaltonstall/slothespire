@@ -3,6 +3,7 @@ import type { Action } from "../engine/actions";
 import { CARD_DEFS } from "../content/cards";
 import { HOTFIX_DEFS } from "../content/hotfixes";
 import { getIntent } from "../content/enemies";
+import { isMuted, toggleMute, sfx } from "./sfx";
 
 function intentLabel(intent: Intent | undefined): { icon: string; text: string; colorClass: string } {
   if (!intent) return { icon: "?", text: "Unknown", colorClass: "intent-unknown" };
@@ -306,7 +307,7 @@ export function renderCombat(state: GameState, dispatch: (a: Action) => void): H
 
     <div class="sc-foot">
       <button class="sc-footer-btn" id="sc-codex-btn">📖 Codex</button>
-      <span>⏸ Pause</span>
+      <button class="sc-footer-btn" id="sc-mute-btn" title="Toggle sound">${isMuted() ? "🔇" : "🔊"}</button>
       <span class="right">seed: ${state.meta.seed}</span>
     </div>
   `;
@@ -322,6 +323,12 @@ export function renderCombat(state: GameState, dispatch: (a: Action) => void): H
   root.querySelector<HTMLButtonElement>("#sc-codex-btn")?.addEventListener("click", () =>
     dispatch({ type: "GO_TO_CODEX", returnScene: "combat" })
   );
+
+  root.querySelector<HTMLButtonElement>("#sc-mute-btn")?.addEventListener("click", (e) => {
+    const muted = toggleMute();
+    (e.currentTarget as HTMLButtonElement).textContent = muted ? "🔇" : "🔊";
+    if (!muted) sfx.uiClick();
+  });
 
   root.querySelectorAll<HTMLButtonElement>(".sc-hotfix-btn").forEach(btn => {
     btn.addEventListener("click", () =>
