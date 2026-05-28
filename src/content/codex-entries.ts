@@ -122,4 +122,92 @@ export const CODEX_ENTRIES: Record<string, CodexEntry> = {
     description: "Stability 100 (Act II Boss) · Escalating burns + debuffs",
     realConcept: `A total outage is the worst-case scenario: all or most of a service's functionality is unavailable to users. Root causes vary — hardware failure, bad deploy, cascading dependency failures, DDoS — but the response is consistent: establish communication, triage severity, engage the right people, resolve, and write a postmortem. Total Outage in Slothespire teaches graceful degradation: you cannot prevent all the damage, but you can survive it with the right combination of headroom and targeted responses.`,
   },
+  // New relic entries
+  synthetic_tests: {
+    id: "synthetic_tests", kind: "relic", name: "Synthetic Tests",
+    description: "At start of each turn, gain 1 Headroom.",
+    realConcept: `Datadog Synthetic Monitoring continuously runs scripted tests against your APIs and UIs from locations around the world — whether or not a real user is triggering them. It's the difference between reactive monitoring (someone reports it's broken) and proactive monitoring (you know it's broken first). The Headroom every turn in Slothespire reflects what synthetic tests give you: a baseline buffer before the real traffic hits.`,
+    docsLink: "https://docs.datadoghq.com/synthetics/",
+  },
+  error_tracking: {
+    id: "error_tracking", kind: "relic", name: "Error Tracking",
+    description: "At start of combat, apply Customer-Facing 1 to all enemies.",
+    realConcept: `Datadog Error Tracking groups, deduplicates, and prioritizes errors across your services. Without it, every unique stack trace looks like a new incident — with it, you see that 500 occurrences are the same root cause. The relic applies Customer-Facing to all enemies because Error Tracking surfaces which problems are user-visible: those are the ones that hurt your SLO fastest and deserve your first attack.`,
+    docsLink: "https://docs.datadoghq.com/error_tracking/",
+  },
+  dashboards: {
+    id: "dashboards", kind: "relic", name: "Dashboards",
+    description: "At start of each turn, gain 1 Headroom.",
+    realConcept: `Datadog Dashboards centralize metrics, logs, traces, and events into a single pane of glass. Well-built dashboards let an on-call engineer orient in seconds rather than minutes during an incident: budget burn rate, error rates, latency percentiles, and infrastructure health in one view. The steady Headroom every turn represents operational situational awareness — you're never caught completely off guard.`,
+    docsLink: "https://docs.datadoghq.com/dashboards/",
+  },
+  service_catalog: {
+    id: "service_catalog", kind: "relic", name: "Service Catalog",
+    description: "At start of combat, gain Observability 1.",
+    realConcept: `Datadog Service Catalog tracks ownership, dependencies, documentation, and SLOs for every service in your organization. When an incident starts, the first question is often "who owns this?" — Service Catalog answers it immediately. Observability in Slothespire means seeing intent ahead; similarly, knowing your service graph means knowing what's likely to fail next and who to page.`,
+    docsLink: "https://docs.datadoghq.com/service_catalog/",
+  },
+  incident_management: {
+    id: "incident_management", kind: "relic", name: "Incident Management",
+    description: "At start of combat, gain Confidence 1.",
+    realConcept: `Datadog Incident Management provides structured workflows for declaring, triaging, communicating, and resolving incidents. Having a framework — even under pressure — improves outcomes: clear ownership, status updates, timeline tracking, and post-mortem linkage. Confidence in Slothespire doubles your next attack. Starting an incident with a proper management process gives you exactly that: the confidence to act decisively rather than reactively.`,
+    docsLink: "https://docs.datadoghq.com/service_management/incident_management/",
+  },
+  workflow_automation: {
+    id: "workflow_automation", kind: "relic", name: "Workflow Automation",
+    description: "At start of combat, gain 6 Headroom.",
+    realConcept: `Datadog Workflow Automation lets you build automated runbooks triggered by monitors, incidents, or security signals. When a P1 fires, automation can already be silencing duplicate alerts, gathering diagnostic data, and paging the right team — before a human has clicked anything. The upfront Headroom in Slothespire represents the buffer automation creates: you start from a position of stability rather than immediately scrambling.`,
+    docsLink: "https://docs.datadoghq.com/service_management/workflows/",
+  },
+  notebooks: {
+    id: "notebooks", kind: "relic", name: "Notebooks",
+    description: "At start of combat, draw 1 extra card.",
+    realConcept: `Datadog Notebooks are collaborative, living documents that mix graphs, logs, and narrative text. During incidents they serve as a shared investigation surface — anyone can see what's been tried, what the data shows, and what's still unknown. After incidents they become the foundation for postmortems. The extra card at combat start reflects what a good incident notebook gives you: more information and more options from the opening move.`,
+    docsLink: "https://docs.datadoghq.com/notebooks/",
+  },
+  cloud_cost_mgmt: {
+    id: "cloud_cost_mgmt", kind: "relic", name: "Cloud Cost Mgmt",
+    description: "At start of each turn, gain 5 Credits.",
+    realConcept: `Datadog Cloud Cost Management provides visibility into cloud spending, allocates costs to teams and services, and surfaces optimization opportunities. Idle resources, over-provisioned instances, and wasted reserved capacity all show up here. In Slothespire, credits represent the operational budget you have to invest in improvements — Cloud Cost Management generates steady credits because reducing waste creates a compounding economic advantage over time.`,
+    docsLink: "https://docs.datadoghq.com/cloud_cost_management/",
+  },
+  rum: {
+    id: "rum", kind: "relic", name: "RUM",
+    description: "At start of each turn, if hand size < 3, draw 1 card.",
+    realConcept: `Datadog Real User Monitoring captures what actual users experience: page load times, JavaScript errors, user journeys, and frustration signals. Backend metrics look healthy but users are rage-clicking? RUM shows you. It's the empathy layer of observability — reminding you that SLOs exist to protect real people. When your hand is small (options are limited), RUM draws you a card: sometimes insight about the user experience reveals a path you hadn't considered.`,
+    docsLink: "https://docs.datadoghq.com/real_user_monitoring/",
+  },
+  sensitive_data_scanner: {
+    id: "sensitive_data_scanner", kind: "relic", name: "Sensitive Data Scanner",
+    description: "At start of combat, remove the first curse from your deck (if any).",
+    realConcept: `Datadog Sensitive Data Scanner scans logs and events in real time to detect and redact sensitive information — PII, credit card numbers, API keys — before they're stored or indexed. A secret in your logs is technical debt waiting to become a security incident. The relic removes a curse from your deck at combat start: it finds and eliminates the hidden liability before the fight escalates, exactly as SDS removes data risk before it compounds.`,
+    docsLink: "https://docs.datadoghq.com/sensitive_data_scanner/",
+  },
+  continuous_profiler: {
+    id: "continuous_profiler", kind: "relic", name: "Continuous Profiler",
+    description: "At start of combat, gain Pressure 1.",
+    realConcept: `Datadog Continuous Profiler shows code-level performance at all times — which functions consume the most CPU, memory, or I/O — with near-zero overhead in production. Unlike ad-hoc profiling sessions, it's always running, so you capture the slow path even if it only happens under specific load patterns. Pressure in Slothespire adds flat damage to every attack; the Continuous Profiler gives you constant situational advantage — every action you take is informed by deep system knowledge.`,
+    docsLink: "https://docs.datadoghq.com/profiler/",
+  },
+  // New enemy entries
+  phantom_read: {
+    id: "phantom_read", kind: "enemy", name: "Phantom Read",
+    description: "Stability 16 · Burns and applies Throttled",
+    realConcept: `A phantom read occurs in database transactions when a query returns different rows on successive reads within the same transaction, because another transaction inserted or deleted matching rows in between. It's one of the classic database isolation anomalies. The Throttled debuff in Slothespire reflects what phantom reads do in practice: they create inconsistent views that slow down your decision-making and force you to re-read, costing you efficiency when you can least afford it.`,
+  },
+  stale_cache: {
+    id: "stale_cache", kind: "enemy", name: "Stale Cache",
+    description: "Stability 22 · Buffs itself with Pressure then burns hard",
+    realConcept: `A stale cache serves outdated data after the source has changed, often because TTL (time-to-live) was set too high or invalidation logic was missed. Worse, a stale cache can mask a broken backend — everything looks fine until the cache expires and the real problem surfaces suddenly. Stale Cache buffs itself before attacking: the problem has been quietly accumulating damage multipliers while you thought everything was fine, then hits hard when the cache finally breaks.`,
+  },
+  misconfigured_tls: {
+    id: "misconfigured_tls", kind: "enemy", name: "Misconfigured TLS",
+    description: "Stability 20 · Applies Toil then burns",
+    realConcept: `A misconfigured TLS certificate — expired, self-signed, wrong domain, weak cipher — can silently fail clients, cause mysterious connection errors, or expose traffic to interception. The operational cost is high: debugging TLS issues is time-consuming (Toil), and the errors are often cryptic. In Slothespire, Misconfigured TLS first applies Toil (draining your energy), then attacks — representing how TLS problems exhaust on-call before the actual damage becomes apparent.`,
+  },
+  deadlock_db: {
+    id: "deadlock_db", kind: "enemy", name: "Deadlock",
+    description: "Stability 30 · Applies heavy Toil then burns hard",
+    realConcept: `A deadlock occurs when two processes each hold a resource the other needs, creating a circular wait that neither can break. In databases, this shows as transactions hanging until a timeout kills one of them. Prevention strategies include consistent lock ordering, short transactions, and deadlock detection algorithms. Deadlock applies heavy Toil (two stacks, draining two energy next turn) before attacking — you're constrained and unable to act freely before taking the hit.`,
+  },
 };
