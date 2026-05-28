@@ -1,4 +1,4 @@
-import type { GameState, Card } from "./state";
+import type { GameState, Card, StatusMap, StatusId } from "./state";
 import { nextRng } from "./rng";
 
 export function burnEnemy(state: GameState, enemyId: string, amount: number): GameState {
@@ -50,4 +50,84 @@ export function drawCards(state: GameState, count: number): GameState {
   }
 
   return { ...s, player: { ...s.player, hand, draw, discard } };
+}
+
+const DECAYING_STATUSES: StatusId[] = [
+  "customer_facing", "throttled", "toil", "flow", "on_call_fatigue",
+];
+
+export function applyStatus(
+  state: GameState,
+  target: "player" | string,
+  statusId: StatusId,
+  stacks: number
+): GameState {
+  if (target === "player") {
+    return {
+      ...state,
+      player: {
+        ...state.player,
+        statuses: {
+          ...state.player.statuses,
+          [statusId]: (state.player.statuses[statusId] ?? 0) + stacks,
+        },
+      },
+    };
+  }
+  if (!state.combat) return state;
+  const enemies = state.combat.enemies.map(e =>
+    e.instanceId === target
+      ? { ...e, statuses: { ...e.statuses, [statusId]: (e.statuses[statusId] ?? 0) + stacks } }
+      : e
+  );
+  return { ...state, combat: { ...state.combat, enemies } };
+}
+
+export function consumeStatus(
+  state: GameState,
+  target: "player" | string,
+  statusId: StatusId
+): GameState {
+  if (target === "player") {
+    const newStatuses = { ...state.player.statuses };
+    delete newStatuses[statusId];
+    return { ...state, player: { ...state.player, statuses: newStatuses } };
+  }
+  if (!state.combat) return state;
+  const enemies = state.combat.enemies.map(e => {
+    if (e.instanceId !== target) return e;
+    const newStatuses = { ...e.statuses };
+    delete newStatuses[statusId];
+    return { ...e, statuses: newStatuses };
+  });
+  return { ...state, combat: { ...state.combat, enemies } };
+}
+
+export function tickStatuses(statuses: StatusMap): StatusMap {
+  const result: StatusMap = { ...statuses };
+  for (const id of DECAYING_STATUSES) {
+    if (result[id] !== undefined) {
+      const next = (result[id] as number) - 1;
+      if (next <= 0) delete result[id];
+      else result[id] = next;
+    }
+  }
+  return result;
+}
+
+export function burnWithModifiers(
+  base: number,
+  sourceStatuses: StatusMap,
+  targetStatuses: StatusMap
+): number {
+  let amount = base;
+  if (sourceStatuses.pressure) amount += sourceStatuses.pressure;
+  if (sourceStatuses.confidence) amount *= 2;
+  if (sourceStatuses.throttled) amount = Math.floor(amount * 0.75);
+  if (targetStatuses.customer_facing) amount = Math.ceil(amount * 1.5);
+  return amount;
+}
+
+export function headroomWithModifiers(base: number, playerStatuses: StatusMap): number {
+  return base + (playerStatuses.stability ?? 0);
 }
