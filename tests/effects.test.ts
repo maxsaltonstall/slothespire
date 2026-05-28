@@ -15,6 +15,7 @@ function makeCombatState(budgetOverride?: number) {
     combat: {
       enemies: [enemy],
       intentByEnemy: { [enemy.instanceId]: { kind: "burn", amount: 6 } },
+      activePowers: [],
       turn: 1,
       phase: "player",
     },

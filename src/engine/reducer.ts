@@ -4,7 +4,7 @@ import { buildStarterDeck, CARD_DEFS } from "../content/cards";
 import { HOTFIX_DEFS } from "../content/hotfixes";
 import { createEnemy, getIntent } from "../content/enemies";
 import { shuffleDeck, drawCards, burnEnemy, addHeadroom, applyStatus, consumeStatus, tickStatuses, burnWithModifiers, headroomWithModifiers } from "./effects";
-import type { Intent } from "./state";
+import type { Intent, StatusId } from "./state";
 
 export function reduce(state: GameState, action: Action): GameState {
   switch (action.type) {

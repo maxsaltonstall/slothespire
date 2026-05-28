@@ -1,6 +1,7 @@
 import type { GameState, Card, Intent } from "../engine/state";
 import type { Action } from "../engine/actions";
 import { CARD_DEFS } from "../content/cards";
+import { HOTFIX_DEFS } from "../content/hotfixes";
 
 function intentLabel(intent: Intent | undefined): { icon: string; text: string; colorClass: string } {
   if (!intent) return { icon: "?", text: "Unknown", colorClass: "intent-unknown" };
@@ -66,6 +67,10 @@ export function renderCombat(state: GameState, dispatch: (a: Action) => void): H
     const intent = intentByEnemy[enemy.instanceId];
     const { icon, text, colorClass } = intentLabel(intent);
     const stabPct = Math.round((enemy.stability / enemy.maxStability) * 100);
+    const statusPills = Object.entries(enemy.statuses)
+      .filter(([, v]) => (v ?? 0) > 0)
+      .map(([id, v]) => `<span class="sc-status-pill">${id.replace(/_/g, " ")} ${v}</span>`)
+      .join("");
     return `
       <div class="sc-enemy">
         <div class="sc-intent ${colorClass}">${icon} ${text}</div>
@@ -73,8 +78,26 @@ export function renderCombat(state: GameState, dispatch: (a: Action) => void): H
         <div class="sc-enemy-name">${enemy.name}</div>
         <div class="sc-stab-bar"><div class="sc-stab-fill" style="width:${stabPct}%"></div></div>
         <div class="sc-enemy-hp">${enemy.stability} / ${enemy.maxStability}</div>
+        <div class="sc-status-pills">${statusPills}</div>
       </div>
     `;
+  }).join("");
+
+  const playerStatusPills = Object.entries(state.player.statuses)
+    .filter(([, v]) => (v ?? 0) > 0)
+    .map(([id, v]) => `<span class="sc-status-pill sc-status-player">${id.replace(/_/g, " ")} ${v}</span>`)
+    .join("");
+
+  const powersHtml = state.combat.activePowers.length > 0
+    ? state.combat.activePowers.map(p => `<span class="sc-power-pill">${p.name}</span>`).join(" ")
+    : "<span style='opacity:0.3;font-size:10px'>no active powers</span>";
+
+  const hotfixSlots = [0, 1, 2].map(i => {
+    const hfId = state.player.hotfixes[i];
+    const def = hfId ? HOTFIX_DEFS[hfId] : null;
+    return def
+      ? `<button class="sc-hotfix-btn" data-hotfix="${hfId}">${def.name.replace(" Hotfix", "")}</button>`
+      : `<div class="sc-hotfix-empty">HOTFIX<br>—</div>`;
   }).join("");
 
   root.innerHTML = `
@@ -217,6 +240,15 @@ export function renderCombat(state: GameState, dispatch: (a: Action) => void): H
         font-size: 10px; font-family: var(--font-display); color: var(--color-accent);
       }
       .sc-foot .right { margin-left: auto; opacity: 0.5; }
+      .sc-status-pills { display: flex; flex-wrap: wrap; gap: 2px; justify-content: center; margin-top: 2px; }
+      .sc-status-pill { font-size: 8px; background: var(--color-border-low); padding: 1px 4px; border-radius: 3px; color: var(--color-text-dim); }
+      .sc-status-player { color: var(--color-accent); }
+      .sc-player-statuses { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 4px; min-height: 16px; }
+      .sc-power-zone { color: var(--color-energy); font-family: var(--font-display); font-size: 10px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; padding: 4px 8px; }
+      .sc-power-pill { background: var(--color-border-low); border: 1px solid var(--color-energy); padding: 2px 6px; border-radius: 3px; font-size: 9px; }
+      .sc-hotfix-btn { width: 60px; padding: 3px 2px; font-size: 8px; font-family: var(--font-display); background: var(--color-base-deep); color: var(--color-pop); border: 1px solid var(--color-pop); border-radius: 3px; cursor: pointer; letter-spacing: 0.5px; }
+      .sc-hotfix-btn:hover { background: var(--color-pop); color: white; }
+      .sc-hotfix-empty { width: 60px; padding: 3px 2px; text-align: center; border: 1px dashed var(--color-border-low); border-radius: 3px; font-size: 9px; color: var(--color-text-dim); }
     </style>
 
     <div class="sc-topbar">
@@ -228,11 +260,12 @@ export function renderCombat(state: GameState, dispatch: (a: Action) => void): H
       <div class="sc-pile">DRAW<div class="sc-pile-n">${draw.length}</div></div>
       <div class="sc-pile">DISC<div class="sc-pile-n">${discard.length}</div></div>
       <div class="sc-pile">EXHL<div class="sc-pile-n">${exhaust.length}</div></div>
+      ${hotfixSlots}
     </div>
 
     <div class="sc-enemies">${enemiesHtml}</div>
 
-    <div class="sc-play">[ play area ]</div>
+    <div class="sc-play"><div class="sc-power-zone">POWERS: ${powersHtml}</div></div>
 
     <div class="sc-hand" id="sc-hand-slot"></div>
 
@@ -245,6 +278,7 @@ export function renderCombat(state: GameState, dispatch: (a: Action) => void): H
         <div class="sc-budget-num">${budget} / ${maxBudget}</div>
       </div>
       <div class="sc-headroom">HEADROOM<br><b>${headroom}</b></div>
+      <div class="sc-player-statuses">${playerStatusPills || "<span style='opacity:0.4;font-size:9px'>no statuses</span>"}</div>
     </div>
 
     <div class="sc-action">
@@ -267,6 +301,12 @@ export function renderCombat(state: GameState, dispatch: (a: Action) => void): H
 
   root.querySelector<HTMLButtonElement>("#sc-end-turn")!
     .addEventListener("click", () => dispatch({ type: "END_TURN" }));
+
+  root.querySelectorAll<HTMLButtonElement>(".sc-hotfix-btn").forEach(btn => {
+    btn.addEventListener("click", () =>
+      dispatch({ type: "USE_HOTFIX", hotfixId: btn.dataset.hotfix!, targetId })
+    );
+  });
 
   return root;
 }
