@@ -5,9 +5,10 @@ relics are Datadog products, and enemies are incidents. *Slay → SLO. The Spire
 
 ## Status
 
-M4 map + scenes — navigable Act I map (7 rows, 15 nodes), combat → card reward → map,
-rest site (refresh/upgrade), incident events (4), shop stub, Act II map on boss win.
-All 10 Scene values route to real implementations. 110 tests.
+M5 content + relics — 21 unique cards with upgrade effects (upgradedEffects), floor-based
+enemy routing (10 enemies), 5 Datadog-product relics (APM Tracing, Live Tail, Watchdog,
+Synthetic Tests, Pager) with onCombatStart/onTurnStart hooks, working shop (BUY_CARD/
+REMOVE_CARD), 8 events (4 per act), O(1) seeded RNG, balance sim (`npm run sim`). 133 tests.
 
 ## Dev
 
@@ -16,6 +17,7 @@ npm install
 npm run dev      # http://localhost:5173
 npm test         # vitest
 npm run build    # type-check + production bundle
+npm run sim      # balance simulation (100 runs, reports win rate)
 ```
 
 ## Docs
