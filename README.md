@@ -5,9 +5,9 @@ relics are Datadog products, and enemies are incidents. *Slay → SLO. The Spire
 
 ## Status
 
-M3 combat depth — all 10 statuses (apply/tick/resolve), Power cards persist in play,
-Exhaust pile, Curses punish when held, Hotfix system (USE_HOTFIX action, 2 hotfixes).
-Page Senior Engineer gains Flow. 88 tests.
+M4 map + scenes — navigable Act I map (7 rows, 15 nodes), combat → card reward → map,
+rest site (refresh/upgrade), incident events (4), shop stub, Act II map on boss win.
+All 10 Scene values route to real implementations. 110 tests.
 
 ## Dev
 
