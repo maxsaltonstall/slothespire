@@ -84,6 +84,10 @@ export function renderMap(state: GameState, dispatch: (a: Action) => void): HTML
       .map-footer { display: flex; align-items: center; gap: 16px;
         font-family: var(--font-display); font-size: 11px; color: var(--color-text-dim); margin-top: 8px; }
       .map-footer .credits { color: var(--color-energy); }
+      .map-quit { background: transparent; border: 0; box-shadow: none;
+        font-family: var(--font-display); font-size: 10px; color: var(--color-text-dim);
+        cursor: pointer; margin-left: auto; padding: 0; letter-spacing: 1px; transition: color 0.15s; }
+      .map-quit.confirming { color: var(--color-danger); text-shadow: var(--glow-danger); }
     </style>
     <div class="map-header">// ACT ${act} · ${act === 1 ? "Single-Service SLO" : "User-Journey SLO"}</div>
     <div class="map-rows">${rowsHtml}</div>
@@ -91,6 +95,7 @@ export function renderMap(state: GameState, dispatch: (a: Action) => void): HTML
       <span>SLO BUDGET <b>${state.player.budget}/${state.player.maxBudget}</b></span>
       <span>DECK <b>${state.deck.length}</b></span>
       <span class="credits">CREDITS <b>${state.credits}</b></span>
+      <button class="map-quit" id="map-quit-btn">QUIT RUN</button>
     </div>
   `;
 
@@ -99,6 +104,22 @@ export function renderMap(state: GameState, dispatch: (a: Action) => void): HTML
       dispatch({ type: "NAVIGATE", nodeId: el.dataset.nodeId! });
     });
   });
+
+  {
+    const quitBtn = root.querySelector<HTMLButtonElement>("#map-quit-btn")!;
+    quitBtn.addEventListener("click", () => {
+      if (quitBtn.classList.contains("confirming")) {
+        dispatch({ type: "RETURN_TO_TITLE" });
+      } else {
+        quitBtn.classList.add("confirming");
+        quitBtn.textContent = "CONFIRM?";
+        setTimeout(() => {
+          quitBtn.classList.remove("confirming");
+          quitBtn.textContent = "QUIT RUN";
+        }, 3000);
+      }
+    });
+  }
 
   return root;
 }

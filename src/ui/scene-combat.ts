@@ -258,6 +258,8 @@ export function renderCombat(state: GameState, dispatch: (a: Action) => void): H
       }
       .sc-foot .right { margin-left: auto; opacity: 0.5; }
       .sc-footer-btn { background: transparent; border: 0; color: var(--color-accent); font-family: var(--font-display); font-size: 10px; cursor: pointer; padding: 0; }
+      .sc-quit-btn { color: var(--color-text-dim); transition: color 0.15s; }
+      .sc-quit-btn.confirming { color: var(--color-danger); text-shadow: var(--glow-danger); }
       .sc-status-pills { display: flex; flex-wrap: wrap; gap: 2px; justify-content: center; margin-top: 2px; }
       .sc-status-pill { font-size: 8px; background: var(--color-border-low); padding: 1px 4px; border-radius: 3px; color: var(--color-text-dim); }
       .sc-status-player { color: var(--color-accent); }
@@ -308,6 +310,7 @@ export function renderCombat(state: GameState, dispatch: (a: Action) => void): H
     <div class="sc-foot">
       <button class="sc-footer-btn" id="sc-codex-btn">📖 Codex</button>
       <button class="sc-footer-btn" id="sc-mute-btn" title="Toggle sound">${isMuted() ? "🔇" : "🔊"}</button>
+      <button class="sc-footer-btn sc-quit-btn" id="sc-quit-btn">QUIT</button>
       <span class="right">seed: ${state.meta.seed}</span>
     </div>
   `;
@@ -329,6 +332,22 @@ export function renderCombat(state: GameState, dispatch: (a: Action) => void): H
     (e.currentTarget as HTMLButtonElement).textContent = muted ? "🔇" : "🔊";
     if (!muted) sfx.uiClick();
   });
+
+  {
+    const quitBtn = root.querySelector<HTMLButtonElement>("#sc-quit-btn")!;
+    quitBtn.addEventListener("click", () => {
+      if (quitBtn.classList.contains("confirming")) {
+        dispatch({ type: "RETURN_TO_TITLE" });
+      } else {
+        quitBtn.classList.add("confirming");
+        quitBtn.textContent = "CONFIRM?";
+        setTimeout(() => {
+          quitBtn.classList.remove("confirming");
+          quitBtn.textContent = "QUIT";
+        }, 3000);
+      }
+    });
+  }
 
   root.querySelectorAll<HTMLButtonElement>(".sc-hotfix-btn").forEach(btn => {
     btn.addEventListener("click", () =>
