@@ -1,6 +1,7 @@
-import type { GameState } from "../engine/state";
-import { applyStatus, addHeadroom, drawCards } from "../engine/effects";
+import type { Card, GameState } from "../engine/state";
+import { applyStatus, addHeadroom, drawCards, burnEnemy } from "../engine/effects";
 import { nextRng } from "../engine/rng";
+import { CARD_DEFS } from "./cards";
 
 export interface RelicDef {
   id: string;
@@ -10,7 +11,12 @@ export interface RelicDef {
   flavor: string;
   onCombatStart?: (state: GameState) => GameState;
   onTurnStart?: (state: GameState) => GameState;
+  onCardPlayed?: (state: GameState, card: Card) => GameState;
+  onBudgetDamaged?: (state: GameState, amount: number) => GameState;
 }
+
+const _usedThisCombat = new Set<string>();
+export function resetCombatRelicState(): void { _usedThisCombat.clear(); }
 
 export const RELIC_DEFS: Record<string, RelicDef> = {
   pager: {
@@ -52,34 +58,49 @@ export const RELIC_DEFS: Record<string, RelicDef> = {
   },
   error_tracking: {
     id: "error_tracking", name: "Error Tracking", product: "Datadog Error Tracking",
-    description: "At start of combat, apply Customer-Facing 1 to all enemies.",
-    flavor: "Group. Deduplicate. Prioritize.",
-    onCombatStart: (s) => {
-      if (!s.combat) return s;
+    description: "When you take 8+ Burn in one hit, apply Customer-Facing 1 to all enemies.",
+    flavor: "Group. Deduplicate. Prioritize. Then attack.",
+    onBudgetDamaged: (s, amount) => {
+      if (amount < 8 || !s.combat) return s;
       let fresh = s;
-      for (const enemy of fresh.combat!.enemies) {
-        fresh = applyStatus(fresh, enemy.instanceId, "customer_facing", 1);
-      }
+      for (const e of fresh.combat!.enemies) fresh = applyStatus(fresh, e.instanceId, "customer_facing", 1);
       return fresh;
     },
   },
   dashboards: {
     id: "dashboards", name: "Dashboards", product: "Datadog Dashboards",
-    description: "At start of each turn, gain 1 Headroom.",
-    flavor: "The graph goes up. You also go up.",
-    onTurnStart: (s) => addHeadroom(s, 1),
+    description: "At start of each turn, gain +1 Energy if you have no active debuffs.",
+    flavor: "When everything is green, move faster.",
+    onTurnStart: (s) => {
+      const { toil, on_call_fatigue, burnout } = s.player.statuses;
+      const hasDebuff = (toil ?? 0) > 0 || (on_call_fatigue ?? 0) > 0 || (burnout ?? 0) > 0;
+      return hasDebuff ? s : { ...s, player: { ...s.player, energy: s.player.energy + 1 } };
+    },
   },
   service_catalog: {
     id: "service_catalog", name: "Service Catalog", product: "Datadog Service Catalog",
-    description: "At start of combat, gain Observability 1.",
-    flavor: "Know your dependencies. Own your services.",
-    onCombatStart: (s) => applyStatus(s, "player", "observability", 1),
+    description: "At start of combat, apply Throttled 2 to all enemies.",
+    flavor: "Know the dependencies. Control the blast radius.",
+    onCombatStart: (s) => {
+      if (!s.combat) return s;
+      let fresh = s;
+      for (const e of fresh.combat!.enemies) fresh = applyStatus(fresh, e.instanceId, "throttled", 2);
+      return fresh;
+    },
   },
   incident_management: {
     id: "incident_management", name: "Incident Management", product: "Datadog Incident Management",
-    description: "At start of combat, gain Confidence 1.",
-    flavor: "Declared. Triaged. Resolved.",
-    onCombatStart: (s) => applyStatus(s, "player", "confidence", 1),
+    description: "First time budget drops below 50% in a combat, gain Confidence 1.",
+    flavor: "Declared. Triaged. Now fight back.",
+    onBudgetDamaged: (s, _amount) => {
+      const key = "incident_management";
+      if (_usedThisCombat.has(key)) return s;
+      if (s.player.budget <= Math.floor(s.player.maxBudget * 0.5)) {
+        _usedThisCombat.add(key);
+        return applyStatus(s, "player", "confidence", 1);
+      }
+      return s;
+    },
   },
   workflow_automation: {
     id: "workflow_automation", name: "Workflow Automation", product: "Datadog Workflow Automation",
@@ -89,9 +110,9 @@ export const RELIC_DEFS: Record<string, RelicDef> = {
   },
   notebooks: {
     id: "notebooks", name: "Notebooks", product: "Datadog Notebooks",
-    description: "At start of combat, draw 1 extra card.",
-    flavor: "Collaborative investigation, documented.",
-    onCombatStart: (s) => drawCards(s, 1),
+    description: "Draw 1 card whenever you play an Exhaust card.",
+    flavor: "Commit to the investigation. Learn something new.",
+    onCardPlayed: (s, card) => CARD_DEFS[card.defId]?.exhaust ? drawCards(s, 1) : s,
   },
   cloud_cost_mgmt: {
     id: "cloud_cost_mgmt", name: "Cloud Cost Mgmt", product: "Datadog Cloud Cost Management",
@@ -117,9 +138,13 @@ export const RELIC_DEFS: Record<string, RelicDef> = {
   },
   continuous_profiler: {
     id: "continuous_profiler", name: "Continuous Profiler", product: "Datadog Continuous Profiler",
-    description: "At start of combat, gain Pressure 1.",
-    flavor: "Always-on performance visibility.",
-    onCombatStart: (s) => applyStatus(s, "player", "pressure", 1),
+    description: "When you play an attack card, deal 2 extra Burn to the weakest enemy.",
+    flavor: "Always-on analysis finds the slow path every time.",
+    onCardPlayed: (s, card) => {
+      if (card.type !== "attack" || !s.combat || s.combat.enemies.length === 0) return s;
+      const weakest = s.combat.enemies.reduce((a, b) => a.stability <= b.stability ? a : b);
+      return burnEnemy(s, weakest.instanceId, 2);
+    },
   },
   network_performance_monitoring: {
     id: "network_performance_monitoring", name: "Network Performance Monitoring", product: "Datadog NPM",
@@ -151,9 +176,14 @@ export const RELIC_DEFS: Record<string, RelicDef> = {
   },
   audit_trail: {
     id: "audit_trail", name: "Audit Trail", product: "Datadog Audit Trail",
-    description: "At start of combat, gain Confidence 1 and Observability 1.",
-    flavor: "Every action logged. Every anomaly surfaced.",
-    onCombatStart: (s) => applyStatus(applyStatus(s, "player", "confidence", 1), "player", "observability", 1),
+    description: "At start of combat, gain Confidence 1 and Observability 1. For each relic beyond 4, also gain Stability 1.",
+    flavor: "Every action logged. Every advantage compounded.",
+    onCombatStart: (s) => {
+      let fresh = applyStatus(applyStatus(s, "player", "confidence", 1), "player", "observability", 1);
+      const extraRelics = Math.max(0, s.player.relics.length - 4);
+      if (extraRelics > 0) fresh = applyStatus(fresh, "player", "stability", extraRelics);
+      return fresh;
+    },
   },
 };
 

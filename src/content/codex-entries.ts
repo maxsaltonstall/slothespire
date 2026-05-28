@@ -131,25 +131,25 @@ export const CODEX_ENTRIES: Record<string, CodexEntry> = {
   },
   error_tracking: {
     id: "error_tracking", kind: "relic", name: "Error Tracking",
-    description: "At start of combat, apply Customer-Facing 1 to all enemies.",
+    description: "When you take 8+ Burn in one hit, apply Customer-Facing 1 to all enemies.",
     realConcept: `Datadog Error Tracking groups, deduplicates, and prioritizes errors across your services. Without it, every unique stack trace looks like a new incident — with it, you see that 500 occurrences are the same root cause. The relic applies Customer-Facing to all enemies because Error Tracking surfaces which problems are user-visible: those are the ones that hurt your SLO fastest and deserve your first attack.`,
     docsLink: "https://docs.datadoghq.com/error_tracking/",
   },
   dashboards: {
     id: "dashboards", kind: "relic", name: "Dashboards",
-    description: "At start of each turn, gain 1 Headroom.",
+    description: "At start of each turn, gain +1 Energy if you have no active debuffs.",
     realConcept: `Datadog Dashboards centralize metrics, logs, traces, and events into a single pane of glass. Well-built dashboards let an on-call engineer orient in seconds rather than minutes during an incident: budget burn rate, error rates, latency percentiles, and infrastructure health in one view. The steady Headroom every turn represents operational situational awareness — you're never caught completely off guard.`,
     docsLink: "https://docs.datadoghq.com/dashboards/",
   },
   service_catalog: {
     id: "service_catalog", kind: "relic", name: "Service Catalog",
-    description: "At start of combat, gain Observability 1.",
+    description: "At start of combat, apply Throttled 2 to all enemies.",
     realConcept: `Datadog Service Catalog tracks ownership, dependencies, documentation, and SLOs for every service in your organization. When an incident starts, the first question is often "who owns this?" — Service Catalog answers it immediately. Observability in Slothespire means seeing intent ahead; similarly, knowing your service graph means knowing what's likely to fail next and who to page.`,
     docsLink: "https://docs.datadoghq.com/service_catalog/",
   },
   incident_management: {
     id: "incident_management", kind: "relic", name: "Incident Management",
-    description: "At start of combat, gain Confidence 1.",
+    description: "First time budget drops below 50% in a combat, gain Confidence 1.",
     realConcept: `Datadog Incident Management provides structured workflows for declaring, triaging, communicating, and resolving incidents. Having a framework — even under pressure — improves outcomes: clear ownership, status updates, timeline tracking, and post-mortem linkage. Confidence in Slothespire doubles your next attack. Starting an incident with a proper management process gives you exactly that: the confidence to act decisively rather than reactively.`,
     docsLink: "https://docs.datadoghq.com/service_management/incident_management/",
   },
@@ -161,7 +161,7 @@ export const CODEX_ENTRIES: Record<string, CodexEntry> = {
   },
   notebooks: {
     id: "notebooks", kind: "relic", name: "Notebooks",
-    description: "At start of combat, draw 1 extra card.",
+    description: "Draw 1 card whenever you play an Exhaust card.",
     realConcept: `Datadog Notebooks are collaborative, living documents that mix graphs, logs, and narrative text. During incidents they serve as a shared investigation surface — anyone can see what's been tried, what the data shows, and what's still unknown. After incidents they become the foundation for postmortems. The extra card at combat start reflects what a good incident notebook gives you: more information and more options from the opening move.`,
     docsLink: "https://docs.datadoghq.com/notebooks/",
   },
@@ -185,7 +185,7 @@ export const CODEX_ENTRIES: Record<string, CodexEntry> = {
   },
   continuous_profiler: {
     id: "continuous_profiler", kind: "relic", name: "Continuous Profiler",
-    description: "At start of combat, gain Pressure 1.",
+    description: "When you play an attack card, deal 2 extra Burn to the weakest enemy.",
     realConcept: `Datadog Continuous Profiler shows code-level performance at all times — which functions consume the most CPU, memory, or I/O — with near-zero overhead in production. Unlike ad-hoc profiling sessions, it's always running, so you capture the slow path even if it only happens under specific load patterns. Pressure in Slothespire adds flat damage to every attack; the Continuous Profiler gives you constant situational advantage — every action you take is informed by deep system knowledge.`,
     docsLink: "https://docs.datadoghq.com/profiler/",
   },
@@ -309,5 +309,11 @@ export const CODEX_ENTRIES: Record<string, CodexEntry> = {
     id: "misconfigured_tls", kind: "enemy", name: "Misconfigured TLS",
     description: "Stability 20 · Applies Toil then burns",
     realConcept: `A misconfigured TLS certificate — expired, self-signed, wrong domain, weak cipher — can silently fail clients, cause mysterious connection errors, or expose traffic to interception. The operational cost is high: debugging TLS issues is time-consuming (Toil), and the errors are often cryptic. In Slothespire, Misconfigured TLS first applies Toil (draining your energy), then attacks — representing how TLS problems exhaust on-call before the actual damage becomes apparent.`,
+  },
+  audit_trail: {
+    id: "audit_trail", kind: "relic", name: "Audit Trail",
+    description: "At start of combat, gain Confidence 1 and Observability 1. For each relic beyond 4, also gain Stability 1.",
+    realConcept: `Datadog Audit Trail provides a tamper-proof, searchable log of every action taken in your Datadog organization — who changed which monitor, when a dashboard was modified, what API key was used. It's the foundation for security investigations, compliance audits, and incident attribution. In Slothespire, Audit Trail combines two immediate bonuses with a scaling synergy: the more observability tools you have, the more each action compounds. More relics means more compounding advantage — which is exactly what a mature observability stack provides.`,
+    docsLink: "https://docs.datadoghq.com/account_management/audit_trail/",
   },
 };

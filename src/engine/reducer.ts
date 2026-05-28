@@ -9,7 +9,7 @@ import { buildActMap } from "./map";
 import { nextRng } from "./rng";
 import { EVENTS } from "../content/events";
 import { generateCardReward, COMBAT_CREDITS, ELITE_CREDITS, TREASURE_CREDITS } from "../content/rewards";
-import { RELIC_DEFS, generateRelicReward } from "../content/relics";
+import { RELIC_DEFS, generateRelicReward, resetCombatRelicState } from "../content/relics";
 
 export function reduce(state: GameState, action: Action): GameState {
   switch (action.type) {
@@ -81,7 +81,12 @@ export function reduce(state: GameState, action: Action): GameState {
             s = burnEnemy(s, tid, finalDamage);
           }
         } else if (effect.kind === "selfBurn") {
-          s = { ...s, player: { ...s.player, budget: s.player.budget - effect.amount } };
+          const selfBurnAmt = effect.amount;
+          s = { ...s, player: { ...s.player, budget: s.player.budget - selfBurnAmt } };
+          for (const relicId of s.player.relics) {
+            const relic = RELIC_DEFS[relicId];
+            if (relic?.onBudgetDamaged) s = relic.onBudgetDamaged(s, selfBurnAmt);
+          }
         } else if (effect.kind === "headroom") {
           const finalHeadroom = headroomWithModifiers(effect.amount, s.player.statuses);
           s = addHeadroom(s, finalHeadroom);
@@ -148,6 +153,12 @@ export function reduce(state: GameState, action: Action): GameState {
         return { ...s, scene: "lost", combat: undefined };
       }
 
+      // Fire onCardPlayed relic hooks
+      for (const relicId of s.player.relics) {
+        const relic = RELIC_DEFS[relicId];
+        if (relic?.onCardPlayed) s = relic.onCardPlayed(s, card);
+      }
+
       return s;
     }
 
@@ -196,6 +207,12 @@ export function reduce(state: GameState, action: Action): GameState {
           const absorbed = Math.min(s.player.headroom, finalBurn);
           const remainder = finalBurn - absorbed;
           s = { ...s, player: { ...s.player, headroom: 0, budget: s.player.budget - remainder } };
+          if (remainder > 0) {
+            for (const relicId of s.player.relics) {
+              const relic = RELIC_DEFS[relicId];
+              if (relic?.onBudgetDamaged) s = relic.onBudgetDamaged(s, remainder);
+            }
+          }
         } else if (intent.kind === "buff") {
           s = applyStatus(s, enemy.instanceId, intent.status, intent.stacks);
         } else if (intent.kind === "debuff") {
@@ -411,6 +428,7 @@ export function reduce(state: GameState, action: Action): GameState {
               statuses: {},
             },
           };
+          resetCombatRelicState();
           fresh = drawCards(fresh, 5);
           const combatState: GameState = {
             ...fresh,
@@ -449,6 +467,7 @@ export function reduce(state: GameState, action: Action): GameState {
               statuses: {},
             },
           };
+          resetCombatRelicState();
           fresh = drawCards(fresh, 5);
           const bossCombatState: GameState = {
             ...fresh,
