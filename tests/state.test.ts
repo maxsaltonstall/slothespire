@@ -21,6 +21,7 @@ describe("initialState", () => {
     expect(s.player.maxBudget).toBe(80);
     expect(s.player.energyPerTurn).toBe(3);
     expect(s.player.energy).toBe(3);
+    expect(s.player.headroom).toBe(0);
     expect(s.player.hand).toEqual([]);
     expect(s.player.draw).toEqual([]);
     expect(s.player.discard).toEqual([]);

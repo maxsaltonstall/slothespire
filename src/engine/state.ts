@@ -60,6 +60,7 @@ export interface GameState {
   player: {
     budget: number; maxBudget: number;
     energy: number; energyPerTurn: number;
+    headroom: number;
     hand: Card[]; draw: Card[]; discard: Card[]; exhaust: Card[];
     statuses: StatusMap;
     relics: string[];
@@ -102,6 +103,7 @@ export function initialState(seed: string): GameState {
       maxBudget: 80,
       energy: 3,
       energyPerTurn: 3,
+      headroom: 0,
       hand: [],
       draw: [],
       discard: [],
