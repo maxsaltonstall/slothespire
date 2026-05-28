@@ -5,8 +5,7 @@ relics are Datadog products, and enemies are incidents. *Slay → SLO. The Spire
 
 ## Status
 
-M1 walking skeleton — title → stub combat → end → title loop works. Real
-combat lands in M2.
+M2 core combat loop — real deck shuffle, play cards (burn/headroom/draw effects), END TURN with enemy resolution, win/lose detection. 52 tests.
 
 ## Dev
 
