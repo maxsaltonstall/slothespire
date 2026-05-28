@@ -409,8 +409,11 @@ export function reduce(state: GameState, action: Action): GameState {
         case "rest":
           return { ...s, scene: "rest" };
 
-        case "shop":
-          return { ...s, scene: "shop" };
+        case "shop": {
+          const [shopOffered, afterShop] = generateCardReward(s, 3);
+          s = afterShop;
+          return { ...s, scene: "shop", shopCards: shopOffered };
+        }
 
         case "event": {
           const [rand, newState] = nextRng(s);
@@ -501,6 +504,30 @@ export function reduce(state: GameState, action: Action): GameState {
 
     case "LOAD_RUN":
       return action.state;
+
+    case "REMOVE_CARD": {
+      if (state.credits < 75) return state;
+      const idx = state.deck.findIndex(c => c.instanceId === action.cardInstanceId);
+      if (idx === -1) return state;
+      return {
+        ...state,
+        credits: state.credits - 75,
+        deck: [...state.deck.slice(0, idx), ...state.deck.slice(idx + 1)],
+      };
+    }
+
+    case "BUY_CARD": {
+      const card = (state.shopCards ?? []).find(c => c.instanceId === action.cardInstanceId);
+      if (!card) return state;
+      const price = 90;
+      if (state.credits < price) return state;
+      return {
+        ...state,
+        credits: state.credits - price,
+        deck: [...state.deck, card],
+        shopCards: (state.shopCards ?? []).filter(c => c.instanceId !== action.cardInstanceId),
+      };
+    }
 
     default:
       return state;

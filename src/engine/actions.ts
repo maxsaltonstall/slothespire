@@ -11,4 +11,6 @@ export type Action =
   | { type: "CHOOSE_REST_OPTION"; option: "refresh" | "upgrade" }
   | { type: "EVENT_CHOICE"; choiceIndex: number }
   | { type: "GO_TO_MAP" }
-  | { type: "LOAD_RUN"; state: GameState };
+  | { type: "LOAD_RUN"; state: GameState }
+  | { type: "REMOVE_CARD"; cardInstanceId: string }
+  | { type: "BUY_CARD"; cardInstanceId: string };
