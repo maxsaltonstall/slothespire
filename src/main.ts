@@ -5,6 +5,11 @@ import { saveRun, loadRun, clearRun } from "./engine/save";
 import { renderTitle } from "./ui/scene-title";
 import { renderCombat } from "./ui/scene-combat";
 import { renderEnd } from "./ui/scene-end";
+import { renderMap } from "./ui/scene-map";
+import { renderReward } from "./ui/scene-reward";
+import { renderRest } from "./ui/scene-rest";
+import { renderEvent } from "./ui/scene-event";
+import { renderShop } from "./ui/scene-shop";
 
 const root = document.getElementById("app");
 if (!root) throw new Error("missing #app root");
@@ -33,17 +38,15 @@ function render(): void {
 function sceneFor(s: GameState): HTMLElement {
   switch (s.scene) {
     case "title":  return renderTitle(s, dispatch);
+    case "map":    return renderMap(s, dispatch);
     case "combat": return renderCombat(s, dispatch);
+    case "reward": return renderReward(s, dispatch);
+    case "rest":   return renderRest(s, dispatch);
+    case "event":  return renderEvent(s, dispatch);
+    case "shop":   return renderShop(s, dispatch);
+    case "codex":  return renderTitle(s, dispatch);  // stub until M6
     case "lost":
     case "won":    return renderEnd(s, dispatch);
-    // Stubs for scenes that don't exist yet — bounce to title.
-    case "map":
-    case "reward":
-    case "shop":
-    case "rest":
-    case "event":
-    case "codex":
-      return renderTitle(s, dispatch);
   }
 }
 

@@ -55,9 +55,10 @@ export function renderTitle(
 
   const continueBtn = root.querySelector<HTMLButtonElement>('[data-action="continue"]');
   if (continueBtn && !continueBtn.disabled) {
-    // M2 stub: main.ts boots from loadRun() at startup, so a reload picks up the save.
-    // Full mid-session state-replacement lands in M6 (save/resume milestone).
-    continueBtn.addEventListener("click", () => window.location.reload());
+    continueBtn.addEventListener("click", () => {
+      const saved = loadRun();
+      if (saved) dispatch({ type: "LOAD_RUN", state: saved });
+    });
   }
 
   return root;
