@@ -25,6 +25,15 @@ const CARD_RARITY: Record<string, "common" | "uncommon" | "rare"> = {
   // Rare
   slo_tightening: "rare", observability_pipeline: "rare",
   page_the_ceo: "rare", postmortem: "rare", war_room: "rare",
+  // Additional commons
+  status_check: "common", quick_fix: "common", alert_triage: "common",
+  incident_commander: "common", service_restart: "common", deployment_freeze: "common",
+  redundancy: "common", sla_penalty: "uncommon",
+  // Additional uncommons
+  post_incident_review: "uncommon", load_spike: "uncommon", chaos_injection: "uncommon",
+  incident_declared: "uncommon", sre_handbook: "uncommon",
+  // Additional rares
+  total_recovery: "rare", five_nines: "rare", deploy_every_commit: "rare",
 };
 
 function cardRarity(defId: string): "common" | "uncommon" | "rare" {

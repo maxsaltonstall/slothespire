@@ -255,6 +255,110 @@ export const CARD_DEFS: Record<string, CardDef> = {
     upgradedPowerTrigger: [{ kind: "applyStatus", status: "observability", stacks: 2, target: "self" }],
     flavor: "See everything. All the time.",
   },
+  // === New commons ===
+  status_check: {
+    id: "status_check", name: "Status Check", type: "skill", cost: 0,
+    effects: [{ kind: "draw", amount: 1 }],
+    upgradedEffects: [{ kind: "draw", amount: 2 }],
+    flavor: "Is it up? Is it really up?",
+  },
+  quick_fix: {
+    id: "quick_fix", name: "Quick Fix", type: "attack", cost: 0,
+    effects: [{ kind: "burn", amount: 5 }],
+    upgradedEffects: [{ kind: "burn", amount: 8 }],
+    exhaust: true,
+    flavor: "Don't ask why it works. Just deploy it.",
+  },
+  alert_triage: {
+    id: "alert_triage", name: "Alert Triage", type: "skill", cost: 1,
+    effects: [{ kind: "removeStatus", status: "toil", target: "self" }, { kind: "headroom", amount: 4 }],
+    upgradedEffects: [{ kind: "removeStatus", status: "toil", target: "self" }, { kind: "headroom", amount: 7 }],
+    flavor: "P1 or P3? You have three seconds to decide.",
+  },
+  incident_commander: {
+    id: "incident_commander", name: "Incident Commander", type: "skill", cost: 1,
+    effects: [{ kind: "applyStatus", status: "flow", stacks: 1, target: "self" }, { kind: "draw", amount: 1 }],
+    upgradedEffects: [{ kind: "applyStatus", status: "flow", stacks: 2, target: "self" }, { kind: "draw", amount: 1 }],
+    flavor: "One person coordinates. Everyone else executes.",
+  },
+  service_restart: {
+    id: "service_restart", name: "Service Restart", type: "attack", cost: 1,
+    effects: [{ kind: "burn", amount: 7 }, { kind: "applyStatus", status: "throttled", stacks: 1, target: "single" }],
+    upgradedEffects: [{ kind: "burn", amount: 10 }, { kind: "applyStatus", status: "throttled", stacks: 1, target: "single" }],
+    flavor: "Have you tried turning it off and on again?",
+  },
+  deployment_freeze: {
+    id: "deployment_freeze", name: "Deployment Freeze", type: "skill", cost: 1,
+    effects: [{ kind: "applyStatus", status: "throttled", stacks: 3, target: "single" }],
+    upgradedEffects: [{ kind: "applyStatus", status: "throttled", stacks: 4, target: "single" }],
+    flavor: "Nobody deploys until we figure out what just happened.",
+  },
+  redundancy: {
+    id: "redundancy", name: "Redundancy", type: "skill", cost: 1,
+    effects: [{ kind: "headroom", amount: 7 }],
+    upgradedEffects: [{ kind: "headroom", amount: 11 }],
+    flavor: "Two is one. One is none.",
+  },
+  sla_penalty: {
+    id: "sla_penalty", name: "SLA Penalty", type: "attack", cost: 2,
+    effects: [{ kind: "burn", amount: 14 }],
+    upgradedEffects: [{ kind: "burn", amount: 18 }],
+    flavor: "The contract has teeth. So do you.",
+  },
+  // === New uncommons ===
+  post_incident_review: {
+    id: "post_incident_review", name: "Post-Incident Review", type: "skill", cost: 2,
+    effects: [{ kind: "restoreBudget", amount: 10 }, { kind: "applyStatus", status: "pressure", stacks: 1, target: "self" }],
+    upgradedEffects: [{ kind: "restoreBudget", amount: 14 }, { kind: "applyStatus", status: "pressure", stacks: 1, target: "self" }],
+    flavor: "We improved the system. And now we're angry about it.",
+  },
+  load_spike: {
+    id: "load_spike", name: "Load Spike", type: "attack", cost: 2,
+    effects: [{ kind: "burn", amount: 9 }, { kind: "applyStatus", status: "customer_facing", stacks: 1, target: "all" }],
+    upgradedEffects: [{ kind: "burn", amount: 12 }, { kind: "applyStatus", status: "customer_facing", stacks: 1, target: "all" }],
+    flavor: "Traffic comes in waves. The wave just arrived.",
+  },
+  chaos_injection: {
+    id: "chaos_injection", name: "Chaos Injection", type: "attack", cost: 2,
+    effects: [{ kind: "applyStatus", status: "customer_facing", stacks: 2, target: "all" }, { kind: "burn", amount: 6 }],
+    upgradedEffects: [{ kind: "applyStatus", status: "customer_facing", stacks: 3, target: "all" }, { kind: "burn", amount: 8 }],
+    flavor: "Controlled chaos. Mostly controlled.",
+  },
+  incident_declared: {
+    id: "incident_declared", name: "Incident Declared", type: "skill", cost: 2,
+    effects: [{ kind: "draw", amount: 3 }, { kind: "applyStatus", status: "flow", stacks: 1, target: "self" }],
+    upgradedEffects: [{ kind: "draw", amount: 4 }, { kind: "applyStatus", status: "flow", stacks: 1, target: "self" }],
+    flavor: "Declaring an incident is not admitting defeat. It's starting the clock.",
+  },
+  sre_handbook: {
+    id: "sre_handbook", name: "SRE Handbook", type: "power", cost: 1,
+    effects: [],
+    powerTrigger: [{ kind: "applyStatus", status: "stability", stacks: 1, target: "self" }],
+    upgradedPowerTrigger: [{ kind: "applyStatus", status: "stability", stacks: 2, target: "self" }],
+    flavor: "Chapter 1: Accept that things will break.",
+  },
+  // === New rares ===
+  total_recovery: {
+    id: "total_recovery", name: "Total Recovery", type: "skill", cost: 3,
+    effects: [{ kind: "restoreBudget", amount: 25 }, { kind: "applyStatus", status: "confidence", stacks: 1, target: "self" }],
+    upgradedEffects: [{ kind: "restoreBudget", amount: 32 }, { kind: "applyStatus", status: "confidence", stacks: 1, target: "self" }],
+    exhaust: true,
+    flavor: "Full service restoration. Bill the outage to the incident.",
+  },
+  five_nines: {
+    id: "five_nines", name: "Five Nines", type: "power", cost: 3,
+    effects: [],
+    powerTrigger: [{ kind: "headroom", amount: 3 }, { kind: "restoreBudget", amount: 3 }],
+    upgradedPowerTrigger: [{ kind: "headroom", amount: 5 }, { kind: "restoreBudget", amount: 5 }],
+    flavor: "99.999% uptime. The other 0.001% is where you live.",
+  },
+  deploy_every_commit: {
+    id: "deploy_every_commit", name: "Deploy Every Commit", type: "power", cost: 2,
+    effects: [],
+    powerTrigger: [{ kind: "burn", amount: 4 }],
+    upgradedPowerTrigger: [{ kind: "burn", amount: 6 }],
+    flavor: "Continuous delivery. Continuous pressure.",
+  },
 };
 
 let _nextInstanceId = 0;
