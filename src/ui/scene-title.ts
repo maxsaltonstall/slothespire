@@ -1,10 +1,13 @@
 import type { GameState } from "../engine/state";
 import type { Action } from "../engine/actions";
+import { loadRun } from "../engine/save";
 
 export function renderTitle(
   _state: GameState,
   dispatch: (a: Action) => void
 ): HTMLElement {
+  const hasSave = loadRun() !== null;
+
   const root = document.createElement("div");
   root.className = "scene-title";
   root.innerHTML = `
@@ -38,6 +41,9 @@ export function renderTitle(
     <div class="subtitle">// SLO the Spire</div>
     <div class="menu">
       <button class="primary" data-action="new-run">NEW RUN</button>
+      ${hasSave
+        ? '<button data-action="continue">CONTINUE</button>'
+        : '<button data-action="continue" disabled title="No saved run">CONTINUE</button>'}
       <button data-action="codex" disabled title="Coming in M6">CODEX</button>
       <button data-action="settings" disabled title="Coming in M9">SETTINGS</button>
     </div>
@@ -46,6 +52,13 @@ export function renderTitle(
 
   root.querySelector<HTMLButtonElement>('[data-action="new-run"]')!
     .addEventListener("click", () => dispatch({ type: "START_RUN" }));
+
+  const continueBtn = root.querySelector<HTMLButtonElement>('[data-action="continue"]');
+  if (continueBtn && !continueBtn.disabled) {
+    // M2 stub: main.ts boots from loadRun() at startup, so a reload picks up the save.
+    // Full mid-session state-replacement lands in M6 (save/resume milestone).
+    continueBtn.addEventListener("click", () => window.location.reload());
+  }
 
   return root;
 }
