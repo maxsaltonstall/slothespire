@@ -5,7 +5,9 @@ import { applyStatus } from "../src/engine/effects";
 import { makeCard } from "../src/content/cards";
 
 function startedRun() {
-  return reduce(initialState("combat-test"), { type: "START_RUN" });
+  const s1 = reduce(initialState("combat-test"), { type: "START_RUN" });
+  const combatNode = s1.map.nodes[0][0];
+  return reduce(s1, { type: "NAVIGATE", nodeId: combatNode.id });
 }
 
 describe("PLAY_CARD", () => {

@@ -37,6 +37,17 @@ export const ENEMY_DEFS: Record<string, EnemyDef> = {
       { kind: "burn" as const, amount: 5 },
     ],
   },
+  the_pager_storm: {
+    id: "the_pager_storm",
+    name: "The Pager Storm",
+    stability: 60,
+    intentPattern: [
+      { kind: "burn" as const, amount: 10 },
+      { kind: "debuff" as const, status: "on_call_fatigue" as const, stacks: 1 },
+      { kind: "burn" as const, amount: 14 },
+      { kind: "buff" as const, status: "pressure" as const, stacks: 2 },
+    ],
+  },
 };
 
 let _nextEnemyId = 0;

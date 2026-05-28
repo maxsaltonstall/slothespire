@@ -3,40 +3,24 @@ import { reduce } from "../src/engine/reducer";
 import { initialState } from "../src/engine/state";
 
 describe("START_RUN", () => {
-  it("transitions to combat scene", () => {
+  it("transitions to 'map' scene and generates act I map", () => {
     const s0 = initialState("seed");
     const s1 = reduce(s0, { type: "START_RUN" });
-    expect(s1.scene).toBe("combat");
+    expect(s1.scene).toBe("map");
     expect(s0.scene).toBe("title"); // immutability
+    expect(s1.map.nodes.length).toBe(7);
   });
 
-  it("builds and shuffles a 10-card deck into draw, deals 5 to hand", () => {
+  it("builds 10-card starter deck", () => {
     const s0 = initialState("seed");
     const s1 = reduce(s0, { type: "START_RUN" });
     expect(s1.deck.length).toBe(10);
-    expect(s1.player.draw.length).toBe(5);  // 10 - 5 dealt
-    expect(s1.player.hand.length).toBe(5);
-    expect(s1.player.discard.length).toBe(0);
   });
 
-  it("sets up the Flapping Health Check enemy with correct stats", () => {
+  it("sets currentNodeId to null", () => {
     const s0 = initialState("seed");
     const s1 = reduce(s0, { type: "START_RUN" });
-    expect(s1.combat).toBeDefined();
-    expect(s1.combat!.enemies.length).toBe(1);
-    expect(s1.combat!.enemies[0].name).toBe("Flapping Health Check");
-    expect(s1.combat!.enemies[0].stability).toBe(20);
-    expect(s1.combat!.turn).toBe(1);
-    expect(s1.combat!.phase).toBe("player");
-  });
-
-  it("sets the first intent for the enemy", () => {
-    const s0 = initialState("seed");
-    const s1 = reduce(s0, { type: "START_RUN" });
-    const enemy = s1.combat!.enemies[0];
-    const intent = s1.combat!.intentByEnemy[enemy.instanceId];
-    expect(intent).toBeDefined();
-    expect(intent.kind).toBe("burn");
+    expect(s1.map.currentNodeId).toBeNull();
   });
 
   it("sets player energy and headroom to starting values", () => {

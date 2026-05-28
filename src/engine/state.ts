@@ -84,6 +84,8 @@ export interface GameState {
   scene: Scene;
   version: number;
   history: GameEvent[];
+  currentEventId?: string;
+  rewardCards?: Card[];
 }
 
 function makeRunId(): string {

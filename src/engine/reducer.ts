@@ -5,6 +5,10 @@ import { HOTFIX_DEFS } from "../content/hotfixes";
 import { createEnemy, getIntent } from "../content/enemies";
 import { shuffleDeck, drawCards, burnEnemy, addHeadroom, applyStatus, consumeStatus, tickStatuses, burnWithModifiers, headroomWithModifiers } from "./effects";
 import type { Intent, StatusId } from "./state";
+import { buildActMap } from "./map";
+import { nextRng } from "./rng";
+import { EVENTS } from "../content/events";
+import { generateCardReward } from "../content/rewards";
 
 export function reduce(state: GameState, action: Action): GameState {
   switch (action.type) {
@@ -13,22 +17,11 @@ export function reduce(state: GameState, action: Action): GameState {
       let s: GameState = { ...initialState(state.meta.seed), deck };
       const [shuffled, afterShuffle] = shuffleDeck(deck, s);
       s = { ...afterShuffle, player: { ...afterShuffle.player, draw: shuffled } };
-      s = drawCards(s, 5);
 
-      const enemy = createEnemy("flapping_health_check");
-      const firstIntent = getIntent(enemy.defId, 0);
+      const { nodes, state: afterMap } = buildActMap(1, s);
+      s = { ...afterMap, map: { act: 1, nodes, currentNodeId: null, visitedNodeIds: [] } };
 
-      return {
-        ...s,
-        scene: "combat",
-        combat: {
-          enemies: [enemy],
-          intentByEnemy: { [enemy.instanceId]: firstIntent },
-          activePowers: [],
-          turn: 1,
-          phase: "player",
-        },
-      };
+      return { ...s, scene: "map" };
     }
 
     case "RETURN_TO_TITLE":
@@ -273,6 +266,114 @@ export function reduce(state: GameState, action: Action): GameState {
 
       return s;
     }
+
+    case "NAVIGATE": {
+      const { nodeId } = action;
+      const node = state.map.nodes.flat().find(n => n.id === nodeId);
+      if (!node) return state;
+
+      let s: GameState = {
+        ...state,
+        map: {
+          ...state.map,
+          currentNodeId: nodeId,
+          visitedNodeIds: [...state.map.visitedNodeIds, nodeId],
+        },
+      };
+
+      switch (node.type) {
+        case "combat":
+        case "elite": {
+          const enemy = createEnemy("flapping_health_check");
+          const firstIntent = getIntent(enemy.defId, 0);
+          const [shuffledDeck, afterShuffle] = shuffleDeck(s.deck, s);
+          s = afterShuffle;
+          let fresh: GameState = {
+            ...s,
+            player: {
+              ...s.player,
+              energy: s.player.energyPerTurn,
+              headroom: 0,
+              hand: [],
+              draw: shuffledDeck,
+              discard: [],
+              statuses: {},
+            },
+          };
+          fresh = drawCards(fresh, 5);
+          return {
+            ...fresh,
+            scene: "combat",
+            combat: {
+              enemies: [enemy],
+              intentByEnemy: { [enemy.instanceId]: firstIntent },
+              activePowers: [],
+              turn: 1,
+              phase: "player",
+            },
+          };
+        }
+
+        case "boss": {
+          const boss = createEnemy("the_pager_storm");
+          const firstIntent = getIntent(boss.defId, 0);
+          const [shuffledDeck, afterShuffle] = shuffleDeck(s.deck, s);
+          s = afterShuffle;
+          let fresh: GameState = {
+            ...s,
+            player: {
+              ...s.player,
+              energy: s.player.energyPerTurn,
+              headroom: 0,
+              hand: [],
+              draw: shuffledDeck,
+              discard: [],
+              statuses: {},
+            },
+          };
+          fresh = drawCards(fresh, 5);
+          return {
+            ...fresh,
+            scene: "combat",
+            combat: {
+              enemies: [boss],
+              intentByEnemy: { [boss.instanceId]: firstIntent },
+              activePowers: [],
+              turn: 1,
+              phase: "player",
+            },
+          };
+        }
+
+        case "rest":
+          return { ...s, scene: "rest" };
+
+        case "shop":
+          return { ...s, scene: "shop" };
+
+        case "event": {
+          const [rand, newState] = nextRng(s);
+          s = newState;
+          const event = EVENTS[Math.floor(rand * EVENTS.length)];
+          return { ...s, scene: "event", currentEventId: event.id };
+        }
+
+        case "treasure": {
+          const [cards, newState] = generateCardReward(s, 1);
+          s = newState;
+          return { ...s, scene: "reward", rewardCards: cards, credits: s.credits + 25 };
+        }
+
+        default:
+          return { ...s, scene: "map" };
+      }
+    }
+
+    case "GO_TO_MAP":
+      return { ...state, scene: "map" };
+
+    case "LOAD_RUN":
+      return action.state;
 
     default:
       return state;
