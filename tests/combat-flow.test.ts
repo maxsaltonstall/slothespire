@@ -366,3 +366,44 @@ describe("END_TURN with statuses", () => {
     expect(s1.player.statuses.burnout).toBeUndefined(); // consumed
   });
 });
+
+describe("USE_HOTFIX", () => {
+  it("removes hotfix from slots and applies burn effect", () => {
+    let s = startedRun();
+    s = { ...s, player: { ...s.player, hotfixes: ["rollback_hotfix"] } };
+    const enemy = s.combat!.enemies[0];
+    // Set stability high enough that 20 burn doesn't kill the enemy
+    s = { ...s, combat: { ...s.combat!, enemies: [{ ...enemy, stability: 50 }] } };
+    const stabilityBefore = 50;
+    const s2 = reduce(s, { type: "USE_HOTFIX", hotfixId: "rollback_hotfix", targetId: enemy.instanceId });
+    expect(s2.player.hotfixes).not.toContain("rollback_hotfix");
+    expect(s2.combat!.enemies[0].stability).toBe(stabilityBefore - 20);
+  });
+
+  it("failover hotfix adds headroom and removes from slots", () => {
+    let s = startedRun();
+    s = { ...s, player: { ...s.player, hotfixes: ["failover_hotfix"] } };
+    const s2 = reduce(s, { type: "USE_HOTFIX", hotfixId: "failover_hotfix", targetId: null });
+    expect(s2.player.headroom).toBe(25);
+    expect(s2.player.hotfixes).toHaveLength(0);
+  });
+
+  it("no-op if hotfix not in player slots", () => {
+    const s = startedRun();
+    const s2 = reduce(s, { type: "USE_HOTFIX", hotfixId: "rollback_hotfix", targetId: null });
+    expect(s2).toBe(s);
+  });
+
+  it("win condition triggers if hotfix kills last enemy", () => {
+    let s = startedRun();
+    const enemy = s.combat!.enemies[0];
+    s = {
+      ...s,
+      player: { ...s.player, hotfixes: ["rollback_hotfix"] },
+      combat: { ...s.combat!, enemies: [{ ...enemy, stability: 1 }] },
+    };
+    const s2 = reduce(s, { type: "USE_HOTFIX", hotfixId: "rollback_hotfix", targetId: enemy.instanceId });
+    expect(s2.scene).toBe("won");
+    expect(s2.combat).toBeUndefined();
+  });
+});

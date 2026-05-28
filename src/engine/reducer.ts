@@ -1,6 +1,7 @@
 import type { Action } from "./actions";
 import { initialState, type GameState } from "./state";
 import { buildStarterDeck, CARD_DEFS } from "../content/cards";
+import { HOTFIX_DEFS } from "../content/hotfixes";
 import { createEnemy, getIntent } from "../content/enemies";
 import { shuffleDeck, drawCards, burnEnemy, addHeadroom, applyStatus, consumeStatus, tickStatuses, burnWithModifiers, headroomWithModifiers } from "./effects";
 import type { Intent } from "./state";
@@ -227,6 +228,48 @@ export function reduce(state: GameState, action: Action): GameState {
       const hasBurnout = !!s.player.statuses.burnout;
       if (hasBurnout) s = consumeStatus(s, "player", "burnout");
       s = drawCards(s, Math.max(0, 5 - (hasBurnout ? 1 : 0)));
+
+      return s;
+    }
+
+    case "USE_HOTFIX": {
+      const { hotfixId, targetId } = action;
+      if (!state.player.hotfixes.includes(hotfixId)) return state;
+      const def = HOTFIX_DEFS[hotfixId];
+      if (!def) return state;
+
+      const idx = state.player.hotfixes.indexOf(hotfixId);
+      let s: GameState = {
+        ...state,
+        player: {
+          ...state.player,
+          hotfixes: [
+            ...state.player.hotfixes.slice(0, idx),
+            ...state.player.hotfixes.slice(idx + 1),
+          ],
+        },
+      };
+
+      for (const effect of def.effects) {
+        if (effect.kind === "burn") {
+          const tid = targetId ?? s.combat?.enemies[0]?.instanceId;
+          if (tid) {
+            const enemy = s.combat?.enemies.find(e => e.instanceId === tid);
+            const finalDamage = burnWithModifiers(effect.amount, s.player.statuses, enemy?.statuses ?? {});
+            if (s.player.statuses.confidence) s = consumeStatus(s, "player", "confidence");
+            s = burnEnemy(s, tid, finalDamage);
+          }
+        } else if (effect.kind === "headroom") {
+          s = addHeadroom(s, headroomWithModifiers(effect.amount, s.player.statuses));
+        }
+      }
+
+      if (s.combat && s.combat.enemies.every(e => e.stability <= 0)) {
+        return { ...s, scene: "won", combat: undefined };
+      }
+      if (s.player.budget <= 0) {
+        return { ...s, scene: "lost", combat: undefined };
+      }
 
       return s;
     }
