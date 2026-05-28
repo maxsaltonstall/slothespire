@@ -5,7 +5,9 @@ relics are Datadog products, and enemies are incidents. *Slay → SLO. The Spire
 
 ## Status
 
-M2 core combat loop — real deck shuffle, play cards (burn/headroom/draw effects), END TURN with enemy resolution, win/lose detection. 52 tests.
+M3 combat depth — all 10 statuses (apply/tick/resolve), Power cards persist in play,
+Exhaust pile, Curses punish when held, Hotfix system (USE_HOTFIX action, 2 hotfixes).
+Page Senior Engineer gains Flow. 88 tests.
 
 ## Dev
 
