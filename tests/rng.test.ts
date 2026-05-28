@@ -62,3 +62,29 @@ describe("nextRng", () => {
     expect(v1a).toBe(v1b); // same cursor position → same value
   });
 });
+
+describe("nextRng O(1) caching", () => {
+  it("produces the same value for the same seed+cursor regardless of call order", () => {
+    const s0 = initialState("cache-test");
+    const [v1] = nextRng(s0);
+    const [v2] = nextRng(s0); // same starting cursor
+    expect(v1).toBe(v2);
+  });
+
+  it("advancing cursor produces different values", () => {
+    const s0 = initialState("adv-test");
+    const [v1, s1] = nextRng(s0);
+    const [v2] = nextRng(s1);
+    expect(v1).not.toBe(v2);
+  });
+
+  it("re-initializes correctly when seed changes between calls", () => {
+    const sa = initialState("seed-x");
+    const sb = initialState("seed-y");
+    const [va] = nextRng(sa);
+    const [vb] = nextRng(sb);
+    const [va2] = nextRng(sa); // back to seed-x at same cursor
+    expect(va).toBe(va2);
+    expect(va).not.toBe(vb);
+  });
+});

@@ -23,10 +23,23 @@ export function parseSeed(input: string): number {
 
 import type { GameState } from "./state";
 
+let _cachedSeed = "";
+let _cachedCursor = 0;
+let _cachedGen: (() => number) | null = null;
+
 export function nextRng(state: GameState): [number, GameState] {
-  const r = mulberry32(parseSeed(state.meta.seed));
-  // advance to the correct cursor position
-  for (let i = 0; i < state.meta.rngCursor; i++) r();
-  const value = r();
-  return [value, { ...state, meta: { ...state.meta, rngCursor: state.meta.rngCursor + 1 } }];
+  const { seed, rngCursor } = state.meta;
+  if (seed !== _cachedSeed || rngCursor < _cachedCursor || _cachedGen === null) {
+    _cachedGen = mulberry32(parseSeed(seed));
+    for (let i = 0; i < rngCursor; i++) _cachedGen();
+    _cachedSeed = seed;
+    _cachedCursor = rngCursor;
+  }
+  while (_cachedCursor < rngCursor) {
+    _cachedGen();
+    _cachedCursor++;
+  }
+  const value = _cachedGen();
+  _cachedCursor++;
+  return [value, { ...state, meta: { ...state.meta, rngCursor: rngCursor + 1 } }];
 }
