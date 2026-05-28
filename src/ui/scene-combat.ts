@@ -304,7 +304,7 @@ export function renderCombat(state: GameState, dispatch: (a: Action) => void): H
     .addEventListener("click", () => dispatch({ type: "END_TURN" }));
 
   root.querySelector<HTMLButtonElement>("#sc-codex-btn")?.addEventListener("click", () =>
-    dispatch({ type: "GO_TO_CODEX", returnScene: "map" })
+    dispatch({ type: "GO_TO_CODEX", returnScene: "combat" })
   );
 
   root.querySelectorAll<HTMLButtonElement>(".sc-hotfix-btn").forEach(btn => {
