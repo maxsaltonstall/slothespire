@@ -13,6 +13,8 @@ import { renderShop } from "./ui/scene-shop";
 import { renderCodex } from "./ui/scene-codex";
 import { renderUpgrading } from "./ui/scene-upgrading";
 import * as codex from "./engine/codex";
+import { animateAttack, animateDefend } from "./ui/animations";
+import { CARD_DEFS } from "./content/cards";
 
 const root = document.getElementById("app");
 if (!root) throw new Error("missing #app root");
@@ -20,7 +22,17 @@ if (!root) throw new Error("missing #app root");
 // Boot: prefer saved run if present, else fresh initial state.
 let state: GameState = loadRun() ?? initialState(`seed-${Date.now().toString(36)}`);
 
+// Animation timer — cancel pending delayed render if player acts again quickly
+let _renderTimer: ReturnType<typeof setTimeout> | null = null;
+
+function scheduleRender(delayMs: number): void {
+  if (_renderTimer !== null) { clearTimeout(_renderTimer); _renderTimer = null; }
+  if (delayMs <= 0) { render(); return; }
+  _renderTimer = setTimeout(() => { _renderTimer = null; render(); }, delayMs);
+}
+
 function dispatch(action: Action): void {
+  const prevState = state;
   state = reduce(state, action);
 
   // Save policy: persist after every reducer call. On terminal scenes,
@@ -40,7 +52,41 @@ function dispatch(action: Action): void {
     for (const e of state.combat.enemies) codex.unlock(e.defId);
   }
 
-  render();
+  // Trigger combat animation on current DOM, then delay re-render so it plays out
+  const animDelay = triggerCombatAnimation(action, prevState, state);
+  scheduleRender(animDelay);
+}
+
+function triggerCombatAnimation(
+  action: Action,
+  prev: GameState,
+  next: GameState
+): number {
+  if (action.type !== "PLAY_CARD") return 0;
+
+  const card = prev.player.hand.find(c => c.instanceId === action.cardInstanceId);
+  if (!card || !prev.combat) return 0;
+
+  if (card.type === "attack") {
+    const targetId = action.targetId ?? prev.combat.enemies[0]?.instanceId;
+    if (!targetId) return 0;
+    const before = prev.combat.enemies.find(e => e.instanceId === targetId)?.stability ?? 0;
+    const after  = next.combat?.enemies.find(e => e.instanceId === targetId)?.stability ?? before;
+    animateAttack(targetId, Math.max(0, before - after));
+    return 400;
+  }
+
+  // Skill or power: show shield if headroom was gained
+  const def = CARD_DEFS[card.defId];
+  const hasHeadroomEffect = def?.effects.some(e => e.kind === "headroom") ||
+                             def?.upgradedEffects?.some(e => e.kind === "headroom");
+  if ((card.type === "skill" || card.type === "power") && hasHeadroomEffect) {
+    const gained = next.player.headroom - prev.player.headroom;
+    animateDefend(Math.max(0, gained));
+    return 540;
+  }
+
+  return 0;
 }
 
 function render(): void {

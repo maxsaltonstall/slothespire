@@ -72,7 +72,7 @@ export function renderCombat(state: GameState, dispatch: (a: Action) => void): H
       .map(([id, v]) => `<span class="sc-status-pill">${id.replace(/_/g, " ")} ${v}</span>`)
       .join("");
     return `
-      <div class="sc-enemy">
+      <div class="sc-enemy" data-enemy-id="${enemy.instanceId}">
         <div class="sc-intent ${colorClass}">${icon} ${text}</div>
         <div class="sc-sprite">▲</div>
         <div class="sc-enemy-name">${enemy.name}</div>
