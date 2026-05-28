@@ -57,4 +57,42 @@ export const EVENTS: IncidentEvent[] = [
       { text: "Refactor it on the spot", outcome: { kind: "addCurse" } },
     ],
   },
+  {
+    id: "on_call_handoff",
+    title: "On-Call Handoff",
+    text: "The engineer going off-call insists everything is fine. The only open incident is labeled 'investigating.' There are seven of them.",
+    choices: [
+      { text: "Accept the handoff cheerfully", outcome: { kind: "nothing" } },
+      { text: "Spend an hour doing a proper status review", outcome: { kind: "gainCredits", amount: 40 } },
+      { text: "Immediately page the departing engineer back", outcome: { kind: "addCurse" } },
+    ],
+  },
+  {
+    id: "forgotten_cron",
+    title: "Forgotten Cron",
+    text: "A cron job running every 60 seconds has been consuming 40% of database CPU for six months. Nobody noticed because it never threw an error.",
+    choices: [
+      { text: "Disable it and see what breaks", outcome: { kind: "loseMaxBudget", amount: 5 } },
+      { text: "Optimize it properly", outcome: { kind: "gainCard", rarity: "uncommon" } },
+    ],
+  },
+  {
+    id: "old_status_page",
+    title: "Old Status Page",
+    text: "Your status page reads 'All Systems Operational.' It last updated 47 days ago. Customers are reporting a five-hundred-second outage.",
+    choices: [
+      { text: "Update the status page first", outcome: { kind: "gainCredits", amount: 30 } },
+      { text: "Fix the outage first", outcome: { kind: "nothing" } },
+    ],
+  },
+  {
+    id: "refactor_time",
+    title: "Refactor Time",
+    text: "A 6,000-line service file. No tests. One author, who left eight months ago. It's the only thing standing between you and the boss.",
+    choices: [
+      { text: "Add tests before touching anything", outcome: { kind: "gainCard", rarity: "rare" } },
+      { text: "Comment out the suspicious lines and ship it", outcome: { kind: "addCurse" } },
+      { text: "Leave it alone", outcome: { kind: "nothing" } },
+    ],
+  },
 ];
