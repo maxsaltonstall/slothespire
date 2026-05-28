@@ -59,8 +59,9 @@ describe("PLAY_CARD", () => {
     const attackCard = s.player.hand.find(c => c.type === "attack");
     if (!attackCard) throw new Error("No attack card in hand");
     const s2 = reduce(s, { type: "PLAY_CARD", cardInstanceId: attackCard.instanceId, targetId: enemy.instanceId });
-    expect(s2.scene).toBe("won");
+    expect(s2.scene).toBe("reward");  // non-boss combats go to reward
     expect(s2.combat).toBeUndefined();
+    expect(s2.rewardCards).toBeDefined();
   });
 
   it("does nothing if cardInstanceId not found in hand", () => {
@@ -405,7 +406,7 @@ describe("USE_HOTFIX", () => {
       combat: { ...s.combat!, enemies: [{ ...enemy, stability: 1 }] },
     };
     const s2 = reduce(s, { type: "USE_HOTFIX", hotfixId: "rollback_hotfix", targetId: enemy.instanceId });
-    expect(s2.scene).toBe("won");
+    expect(s2.scene).toBe("reward");
     expect(s2.combat).toBeUndefined();
   });
 });

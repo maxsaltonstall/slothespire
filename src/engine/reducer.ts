@@ -1,6 +1,6 @@
 import type { Action } from "./actions";
 import { initialState, type GameState } from "./state";
-import { buildStarterDeck, CARD_DEFS } from "../content/cards";
+import { buildStarterDeck, CARD_DEFS, makeCard } from "../content/cards";
 import { HOTFIX_DEFS } from "../content/hotfixes";
 import { createEnemy, getIntent } from "../content/enemies";
 import { shuffleDeck, drawCards, burnEnemy, addHeadroom, applyStatus, consumeStatus, tickStatuses, burnWithModifiers, headroomWithModifiers } from "./effects";
@@ -8,7 +8,7 @@ import type { Intent, StatusId } from "./state";
 import { buildActMap } from "./map";
 import { nextRng } from "./rng";
 import { EVENTS } from "../content/events";
-import { generateCardReward } from "../content/rewards";
+import { generateCardReward, COMBAT_CREDITS, ELITE_CREDITS } from "../content/rewards";
 
 export function reduce(state: GameState, action: Action): GameState {
   switch (action.type) {
@@ -99,7 +99,29 @@ export function reduce(state: GameState, action: Action): GameState {
 
       // Win check
       if (s.combat && s.combat.enemies.every(e => e.stability <= 0)) {
-        return { ...s, scene: "won", combat: undefined };
+        const currentNode = s.map.nodes.flat().find(n => n.id === s.map.currentNodeId);
+        const isBoss = currentNode?.type === "boss";
+        if (isBoss) {
+          if (s.map.act === 1) {
+            const { nodes: act2Nodes, state: afterMap } = buildActMap(2, s);
+            return {
+              ...afterMap,
+              scene: "map",
+              combat: undefined,
+              map: { act: 2, nodes: act2Nodes, currentNodeId: null, visitedNodeIds: [] },
+            };
+          }
+          return { ...s, scene: "won", combat: undefined };
+        }
+        const creditBonus = currentNode?.type === "elite" ? ELITE_CREDITS : COMBAT_CREDITS;
+        const [rewardCards, afterReward] = generateCardReward(s);
+        return {
+          ...afterReward,
+          scene: "reward",
+          combat: undefined,
+          rewardCards,
+          credits: s.credits + creditBonus,
+        };
       }
       // Loss check
       if (s.player.budget <= 0) {
@@ -258,7 +280,29 @@ export function reduce(state: GameState, action: Action): GameState {
       }
 
       if (s.combat && s.combat.enemies.every(e => e.stability <= 0)) {
-        return { ...s, scene: "won", combat: undefined };
+        const currentNode = s.map.nodes.flat().find(n => n.id === s.map.currentNodeId);
+        const isBoss = currentNode?.type === "boss";
+        if (isBoss) {
+          if (s.map.act === 1) {
+            const { nodes: act2Nodes, state: afterMap } = buildActMap(2, s);
+            return {
+              ...afterMap,
+              scene: "map",
+              combat: undefined,
+              map: { act: 2, nodes: act2Nodes, currentNodeId: null, visitedNodeIds: [] },
+            };
+          }
+          return { ...s, scene: "won", combat: undefined };
+        }
+        const creditBonus = currentNode?.type === "elite" ? ELITE_CREDITS : COMBAT_CREDITS;
+        const [rewardCards, afterReward] = generateCardReward(s);
+        return {
+          ...afterReward,
+          scene: "reward",
+          combat: undefined,
+          rewardCards,
+          credits: s.credits + creditBonus,
+        };
       }
       if (s.player.budget <= 0) {
         return { ...s, scene: "lost", combat: undefined };
@@ -367,6 +411,72 @@ export function reduce(state: GameState, action: Action): GameState {
         default:
           return { ...s, scene: "map" };
       }
+    }
+
+    case "PICK_REWARD_CARD": {
+      const { cardInstanceId } = action;
+      if (!cardInstanceId) {
+        return { ...state, scene: "map", rewardCards: undefined };
+      }
+      const picked = (state.rewardCards ?? []).find(c => c.instanceId === cardInstanceId);
+      if (!picked) return state;
+      return {
+        ...state,
+        scene: "map",
+        deck: [...state.deck, picked],
+        rewardCards: undefined,
+      };
+    }
+
+    case "CHOOSE_REST_OPTION": {
+      if (action.option === "refresh") {
+        const healed = Math.min(
+          state.player.maxBudget,
+          state.player.budget + Math.floor(state.player.maxBudget * 0.3)
+        );
+        return { ...state, scene: "map", player: { ...state.player, budget: healed } };
+      }
+      // upgrade: find first non-upgraded card in deck
+      const upgradeIdx = state.deck.findIndex(c => !c.upgraded);
+      if (upgradeIdx === -1) return { ...state, scene: "map" };
+      const upgradedDeck = state.deck.map((c, i) =>
+        i === upgradeIdx ? { ...c, upgraded: true, name: c.name + "+" } : c
+      );
+      return { ...state, scene: "map", deck: upgradedDeck };
+    }
+
+    case "EVENT_CHOICE": {
+      const event = EVENTS.find(e => e.id === state.currentEventId);
+      if (!event) return { ...state, scene: "map", currentEventId: undefined };
+      const choice = event.choices[action.choiceIndex];
+      if (!choice) return state;
+
+      let s: GameState = { ...state, currentEventId: undefined };
+      const { outcome } = choice;
+
+      if (outcome.kind === "gainCredits") {
+        s = { ...s, credits: s.credits + outcome.amount };
+      } else if (outcome.kind === "loseCredits") {
+        s = { ...s, credits: Math.max(0, s.credits - outcome.amount) };
+      } else if (outcome.kind === "loseMaxBudget") {
+        const newMax = s.player.maxBudget - outcome.amount;
+        s = {
+          ...s,
+          player: {
+            ...s.player,
+            maxBudget: newMax,
+            budget: Math.min(s.player.budget, newMax),
+          },
+        };
+      } else if (outcome.kind === "addCurse") {
+        s = { ...s, deck: [...s.deck, makeCard("tech_debt")] };
+      } else if (outcome.kind === "gainCard") {
+        const [cards, newState] = generateCardReward(s, 1);
+        s = { ...newState, deck: [...newState.deck, ...cards] };
+      }
+      // "nothing": no changes
+
+      return { ...s, scene: "map" };
     }
 
     case "GO_TO_MAP":
