@@ -2,7 +2,7 @@ import type { Action } from "./actions";
 import { initialState, type GameState } from "./state";
 import { buildStarterDeck, CARD_DEFS, makeCard } from "../content/cards";
 import { HOTFIX_DEFS } from "../content/hotfixes";
-import { createEnemy, getIntent } from "../content/enemies";
+import { createEnemy, getIntent, pickEnemyForNode } from "../content/enemies";
 import { shuffleDeck, drawCards, burnEnemy, addHeadroom, applyStatus, consumeStatus, tickStatuses, burnWithModifiers, headroomWithModifiers } from "./effects";
 import type { Intent, StatusId } from "./state";
 import { buildActMap } from "./map";
@@ -336,7 +336,15 @@ export function reduce(state: GameState, action: Action): GameState {
       switch (node.type) {
         case "combat":
         case "elite": {
-          const enemy = createEnemy("flapping_health_check");
+          const [rand, afterRand] = nextRng(s);
+          s = afterRand;
+          const enemyDefId = pickEnemyForNode(
+            node.type === "elite" ? "elite" : "combat",
+            nodeId,
+            s.map.act,
+            rand
+          );
+          const enemy = createEnemy(enemyDefId);
           const firstIntent = getIntent(enemy.defId, 0);
           const [shuffledDeck, afterShuffle] = shuffleDeck(s.deck, s);
           s = afterShuffle;
@@ -367,7 +375,8 @@ export function reduce(state: GameState, action: Action): GameState {
         }
 
         case "boss": {
-          const boss = createEnemy("the_pager_storm");
+          const bossDefId = pickEnemyForNode("boss", nodeId, s.map.act, 0.5);
+          const boss = createEnemy(bossDefId);
           const firstIntent = getIntent(boss.defId, 0);
           const [shuffledDeck, afterShuffle] = shuffleDeck(s.deck, s);
           s = afterShuffle;
