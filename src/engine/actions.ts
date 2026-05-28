@@ -13,4 +13,5 @@ export type Action =
   | { type: "GO_TO_MAP" }
   | { type: "LOAD_RUN"; state: GameState }
   | { type: "REMOVE_CARD"; cardInstanceId: string }
-  | { type: "BUY_CARD"; cardInstanceId: string };
+  | { type: "BUY_CARD"; cardInstanceId: string }
+  | { type: "PICK_REWARD_RELIC" };

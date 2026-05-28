@@ -9,6 +9,7 @@ import { buildActMap } from "./map";
 import { nextRng } from "./rng";
 import { EVENTS } from "../content/events";
 import { generateCardReward, COMBAT_CREDITS, ELITE_CREDITS, TREASURE_CREDITS } from "../content/rewards";
+import { RELIC_DEFS, generateRelicReward } from "../content/relics";
 
 export function reduce(state: GameState, action: Action): GameState {
   switch (action.type) {
@@ -118,14 +119,24 @@ export function reduce(state: GameState, action: Action): GameState {
           }
           return { ...s, scene: "won", combat: undefined };
         }
-        const creditBonus = currentNode?.type === "elite" ? ELITE_CREDITS : COMBAT_CREDITS;
+        if (currentNode?.type === "elite") {
+          const [relicId, afterRelic] = generateRelicReward(s);
+          return {
+            ...afterRelic,
+            scene: "reward",
+            combat: undefined,
+            rewardRelic: relicId,
+            rewardCards: undefined,
+            credits: s.credits + ELITE_CREDITS,
+          };
+        }
         const [rewardCards, afterReward] = generateCardReward(s);
         return {
           ...afterReward,
           scene: "reward",
           combat: undefined,
           rewardCards,
-          credits: s.credits + creditBonus,
+          credits: s.credits + COMBAT_CREDITS,
         };
       }
       // Loss check
@@ -247,6 +258,12 @@ export function reduce(state: GameState, action: Action): GameState {
         }
       }
 
+      // Fire onTurnStart relic hooks (after energy restore, before draw)
+      for (const relicId of s.player.relics) {
+        const relic = RELIC_DEFS[relicId];
+        if (relic?.onTurnStart) s = relic.onTurnStart(s);
+      }
+
       // Phase 11: Draw new hand (burnout costs 1 draw; one-shot consumed)
       const hasBurnout = !!s.player.statuses.burnout;
       if (hasBurnout) s = consumeStatus(s, "player", "burnout");
@@ -302,14 +319,24 @@ export function reduce(state: GameState, action: Action): GameState {
           }
           return { ...s, scene: "won", combat: undefined };
         }
-        const creditBonus = currentNode?.type === "elite" ? ELITE_CREDITS : COMBAT_CREDITS;
+        if (currentNode?.type === "elite") {
+          const [relicId, afterRelic] = generateRelicReward(s);
+          return {
+            ...afterRelic,
+            scene: "reward",
+            combat: undefined,
+            rewardRelic: relicId,
+            rewardCards: undefined,
+            credits: s.credits + ELITE_CREDITS,
+          };
+        }
         const [rewardCards, afterReward] = generateCardReward(s);
         return {
           ...afterReward,
           scene: "reward",
           combat: undefined,
           rewardCards,
-          credits: s.credits + creditBonus,
+          credits: s.credits + COMBAT_CREDITS,
         };
       }
       if (s.player.budget <= 0) {
@@ -361,7 +388,7 @@ export function reduce(state: GameState, action: Action): GameState {
             },
           };
           fresh = drawCards(fresh, 5);
-          return {
+          const combatState: GameState = {
             ...fresh,
             scene: "combat",
             combat: {
@@ -372,6 +399,12 @@ export function reduce(state: GameState, action: Action): GameState {
               phase: "player",
             },
           };
+          let afterRelics = combatState;
+          for (const relicId of fresh.player.relics) {
+            const relic = RELIC_DEFS[relicId];
+            if (relic?.onCombatStart) afterRelics = relic.onCombatStart(afterRelics);
+          }
+          return afterRelics;
         }
 
         case "boss": {
@@ -393,7 +426,7 @@ export function reduce(state: GameState, action: Action): GameState {
             },
           };
           fresh = drawCards(fresh, 5);
-          return {
+          const bossCombatState: GameState = {
             ...fresh,
             scene: "combat",
             combat: {
@@ -404,6 +437,12 @@ export function reduce(state: GameState, action: Action): GameState {
               phase: "player",
             },
           };
+          let afterBossRelics = bossCombatState;
+          for (const relicId of fresh.player.relics) {
+            const relic = RELIC_DEFS[relicId];
+            if (relic?.onCombatStart) afterBossRelics = relic.onCombatStart(afterBossRelics);
+          }
+          return afterBossRelics;
         }
 
         case "rest":
@@ -423,9 +462,9 @@ export function reduce(state: GameState, action: Action): GameState {
         }
 
         case "treasure": {
-          const [cards, newState] = generateCardReward(s, 1);
-          s = newState;
-          return { ...s, scene: "reward", rewardCards: cards, credits: s.credits + TREASURE_CREDITS };
+          const [relicId, afterRelic] = generateRelicReward(s);
+          s = afterRelic;
+          return { ...s, scene: "reward", rewardRelic: relicId, rewardCards: undefined, credits: s.credits + TREASURE_CREDITS };
         }
 
         default:
@@ -526,6 +565,17 @@ export function reduce(state: GameState, action: Action): GameState {
         credits: state.credits - price,
         deck: [...state.deck, card],
         shopCards: (state.shopCards ?? []).filter(c => c.instanceId !== action.cardInstanceId),
+      };
+    }
+
+    case "PICK_REWARD_RELIC": {
+      const relicId = state.rewardRelic;
+      if (!relicId) return { ...state, scene: "map" };
+      return {
+        ...state,
+        scene: "map",
+        player: { ...state.player, relics: [...state.player.relics, relicId] },
+        rewardRelic: undefined,
       };
     }
 

@@ -1,10 +1,37 @@
 import type { GameState } from "../engine/state";
 import type { Action } from "../engine/actions";
 import { CARD_DEFS } from "../content/cards";
+import { RELIC_DEFS } from "../content/relics";
 
 export function renderReward(state: GameState, dispatch: (a: Action) => void): HTMLElement {
   const root = document.createElement("div");
   root.className = "scene-reward";
+
+  if (state.rewardRelic) {
+    const relic = RELIC_DEFS[state.rewardRelic];
+    root.innerHTML = `
+      <style>
+        .scene-reward { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; }
+        .relic-box { padding: 28px 40px; background: var(--color-base-deep); border: 1px solid var(--color-energy); border-radius: 8px; text-align: center; box-shadow: 0 0 20px rgba(255,211,77,0.3); max-width: 400px; }
+        .relic-name { font-family: var(--font-display); font-size: 18px; color: var(--color-energy); margin-bottom: 4px; }
+        .relic-product { font-size: 11px; color: var(--color-text-dim); font-family: var(--font-display); margin-bottom: 12px; }
+        .relic-desc { font-size: 12px; line-height: 1.6; }
+        .relic-flavor { font-size: 10px; font-style: italic; opacity: 0.5; margin-top: 10px; }
+      </style>
+      <h2 style="font-family:var(--font-display);color:var(--color-energy);letter-spacing:3px;font-size:24px;">RELIC FOUND</h2>
+      <div class="relic-box">
+        <div class="relic-name">${relic?.name ?? state.rewardRelic}</div>
+        <div class="relic-product">${relic?.product ?? ""}</div>
+        <div class="relic-desc">${relic?.description ?? ""}</div>
+        <div class="relic-flavor">"${relic?.flavor ?? ""}"</div>
+      </div>
+      <button id="accept-relic" class="primary" style="font-family:var(--font-display);font-size:13px;letter-spacing:1px;">ACCEPT RELIC</button>
+    `;
+    root.querySelector<HTMLButtonElement>("#accept-relic")!
+      .addEventListener("click", () => dispatch({ type: "PICK_REWARD_RELIC" }));
+    return root;
+  }
+
   const offered = state.rewardCards ?? [];
 
   const cardsHtml = offered.map(card => {

@@ -38,3 +38,44 @@ describe("NAVIGATE enemy routing", () => {
     expect(s1.combat!.enemies[0].maxStability).toBeGreaterThan(16); // harder than row 0
   });
 });
+
+describe("relic hooks", () => {
+  it("APM Tracing onCombatStart grants Observability 2 to player", () => {
+    let s = reduce(initialState("relic-test"), { type: "START_RUN" });
+    s = { ...s, player: { ...s.player, relics: ["apm_tracing"] } };
+    const node = s.map.nodes[0][0];
+    const s2 = reduce(s, { type: "NAVIGATE", nodeId: node.id });
+    expect(s2.player.statuses.observability).toBe(2);
+  });
+
+  it("Synthetic Tests onTurnStart grants 1 Headroom each turn", () => {
+    let s = reduce(initialState("relic-turn"), { type: "START_RUN" });
+    s = { ...s, player: { ...s.player, relics: ["synthetic_tests"] } };
+    const node = s.map.nodes[0][0];
+    s = reduce(s, { type: "NAVIGATE", nodeId: node.id });
+    // Zero-damage intent so we can measure headroom cleanly
+    const enemy = s.combat!.enemies[0];
+    s = { ...s, combat: { ...s.combat!, intentByEnemy: { [enemy.instanceId]: { kind: "burn", amount: 0 } } } };
+    const s2 = reduce(s, { type: "END_TURN" });
+    // After end turn: headroom resets to 0 after enemy, relic fires onTurnStart → +1 headroom
+    expect(s2.player.headroom).toBe(1);
+  });
+
+  it("Watchdog onCombatStart applies Customer-Facing 1 to highest stability enemy", () => {
+    let s = reduce(initialState("watchdog-test"), { type: "START_RUN" });
+    s = { ...s, player: { ...s.player, relics: ["watchdog"] } };
+    const node = s.map.nodes[0][0];
+    const s2 = reduce(s, { type: "NAVIGATE", nodeId: node.id });
+    const enemy = s2.combat!.enemies[0];
+    expect(enemy.statuses.customer_facing).toBe(1);
+  });
+
+  it("PICK_REWARD_RELIC adds relic to player.relics and returns to map", () => {
+    let s = reduce(initialState("pick-relic"), { type: "START_RUN" });
+    s = { ...s, scene: "reward" as const, rewardRelic: "live_tail" };
+    const s2 = reduce(s, { type: "PICK_REWARD_RELIC" });
+    expect(s2.player.relics).toContain("live_tail");
+    expect(s2.scene).toBe("map");
+    expect(s2.rewardRelic).toBeUndefined();
+  });
+});
