@@ -19,6 +19,28 @@ function intentLabel(intent: Intent | undefined): { icon: string; text: string; 
   }
 }
 
+function intentTooltip(intent: Intent | undefined): string {
+  if (!intent) return "Intent unknown.";
+  switch (intent.kind) {
+    case "burn":
+      return `<b>⚔ Burn ${intent.amount}</b><br>Will deal <b>${intent.amount}</b> damage to your SLO Budget (after Headroom absorbs).`;
+    case "harden":
+      return `<b>🛡 Harden ${intent.amount}</b><br>Will build defensive stacks, reducing incoming Burn.`;
+    case "buff": {
+      const s = intent.status.replace(/_/g, " ");
+      return `<b>⬆ Buff: ${s} +${intent.stacks}</b><br>Will apply <b>${s}</b> to itself, strengthening its attacks.`;
+    }
+    case "debuff": {
+      const s = intent.status.replace(/_/g, " ");
+      return `<b>⬇ Debuff: ${s} +${intent.stacks}</b><br>Will apply <b>${s}</b> to you. Hover a status pill to see its effect.`;
+    }
+    case "multi":
+      return `<b>✦ ${intent.label}</b><br>A multi-part action.`;
+    case "unknown":
+      return `<b>? Unknown</b><br>Intent hidden. Gain <b>Observability</b> (APM Tracing relic or Observability Pipeline card) to reveal it.`;
+  }
+}
+
 function cardIconFor(type: Card["type"]): { icon: string; colorClass: string } {
   switch (type) {
     case "attack": return { icon: "⚔", colorClass: "icon-burn" };
@@ -84,12 +106,14 @@ export function renderCombat(state: GameState, dispatch: (a: Action) => void): H
           const futureTurn = state.combat!.turn + i;
           const futureIntent = getIntent(enemy.defId, futureTurn);
           const { icon: fIcon, text: fText } = intentLabel(futureIntent);
-          return `<div class="sc-intent-future" title="Turn +${i + 1}">${fIcon} ${fText}</div>`;
+          const fTip = (intentTooltip(futureIntent) + `<br><i>Turn +${i + 1}</i>`).replace(/"/g, "&quot;");
+          return `<div class="sc-intent-future" data-tooltip="${fTip}">${fIcon} ${fText}</div>`;
         }).join("")
       : "";
+    const intentTip = intentTooltip(intent).replace(/"/g, "&quot;");
     return `
       <div class="sc-enemy" data-enemy-id="${enemy.instanceId}">
-        <div class="sc-intent ${colorClass}">${icon} ${text}</div>
+        <div class="sc-intent ${colorClass}" data-tooltip="${intentTip}">${icon} ${text}</div>
         ${futureIntentsHtml}
         <div class="sc-sprite">▲</div>
         <div class="sc-enemy-name">${enemy.name}</div>
