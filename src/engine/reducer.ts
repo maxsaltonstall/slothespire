@@ -92,6 +92,8 @@ export function reduce(state: GameState, action: Action): GameState {
           s = addHeadroom(s, finalHeadroom);
         } else if (effect.kind === "draw") {
           s = drawCards(s, effect.amount);
+        } else if (effect.kind === "gainEnergy") {
+          s = { ...s, player: { ...s.player, energy: s.player.energy + effect.amount } };
         } else if (effect.kind === "removeStatus") {
           const tgt = effect.target === "self" ? "player"
                     : (targetId ?? s.combat?.enemies[0]?.instanceId ?? "player");
@@ -342,6 +344,29 @@ export function reduce(state: GameState, action: Action): GameState {
           }
         } else if (effect.kind === "headroom") {
           s = addHeadroom(s, headroomWithModifiers(effect.amount, s.player.statuses));
+        } else if (effect.kind === "draw") {
+          s = drawCards(s, effect.amount);
+        } else if (effect.kind === "gainEnergy") {
+          s = { ...s, player: { ...s.player, energy: s.player.energy + effect.amount } };
+        } else if (effect.kind === "restoreBudget") {
+          s = { ...s, player: { ...s.player, budget: Math.min(s.player.maxBudget, s.player.budget + effect.amount) } };
+        } else if (effect.kind === "applyStatus") {
+          if (effect.target === "self") {
+            s = applyStatus(s, "player", effect.status, effect.stacks);
+          } else if (effect.target === "all") {
+            for (const enemy of s.combat?.enemies ?? []) {
+              s = applyStatus(s, enemy.instanceId, effect.status, effect.stacks);
+            }
+          } else {
+            const tid = targetId ?? s.combat?.enemies[0]?.instanceId;
+            if (tid) s = applyStatus(s, tid, effect.status, effect.stacks);
+          }
+        } else if (effect.kind === "removeStatus") {
+          const tgt = effect.target === "self" ? "player"
+                    : (targetId ?? s.combat?.enemies[0]?.instanceId ?? "player");
+          s = consumeStatus(s, tgt, effect.status);
+        } else if (effect.kind === "selfBurn") {
+          s = { ...s, player: { ...s.player, budget: s.player.budget - effect.amount } };
         }
       }
 
@@ -531,6 +556,18 @@ export function reduce(state: GameState, action: Action): GameState {
     }
 
     case "CHOOSE_REST_OPTION": {
+      if (action.option === "scavenge") {
+        if (state.player.hotfixes.length >= 3) return { ...state, scene: "map" };
+        const pool = Object.keys(HOTFIX_DEFS).filter(id => !state.player.hotfixes.includes(id));
+        if (pool.length === 0) return { ...state, scene: "map" };
+        const [rand, newState] = nextRng(state);
+        const hotfixId = pool[Math.floor(rand * pool.length)];
+        return {
+          ...newState,
+          scene: "map",
+          player: { ...newState.player, hotfixes: [...newState.player.hotfixes, hotfixId] },
+        };
+      }
       if (action.option === "refresh") {
         const healed = Math.min(
           state.player.maxBudget,
@@ -583,6 +620,13 @@ export function reduce(state: GameState, action: Action): GameState {
         s = { ...newState, deck: [...newState.deck, ...cards] };
         const cardName = cards[0]?.name ?? "a card";
         outcomeText = `${cardName} was added to your deck.`;
+      } else if (outcome.kind === "gainHotfix") {
+        if (s.player.hotfixes.length < 3 && outcome.hotfixId in HOTFIX_DEFS) {
+          s = { ...s, player: { ...s.player, hotfixes: [...s.player.hotfixes, outcome.hotfixId] } };
+          outcomeText = `${HOTFIX_DEFS[outcome.hotfixId]?.name ?? "A hotfix"} added to your slots.`;
+        } else {
+          outcomeText = "Your hotfix slots are full. Nothing gained.";
+        }
       } else {
         // "nothing"
         outcomeText = "Nothing changes. You move on.";

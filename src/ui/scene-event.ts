@@ -11,6 +11,7 @@ function outcomeTooltip(outcome: EventOutcome): string {
     case "loseMaxBudget":  return `<b>−${outcome.amount} maximum SLO Budget.</b> Permanent.`;
     case "gainCard":       return `<b>Gain a ${outcome.rarity} card</b> for your deck.`;
     case "addCurse":       return `<b><i>Tech Debt</i> added to your deck.</b> Costs 2 Budget/turn.`;
+    case "gainHotfix":     return `<b>Gain: ${outcome.hotfixId.replace(/_/g, " ")}</b> added to your hotfix slots.`;
   }
 }
 

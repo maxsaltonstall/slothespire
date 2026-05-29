@@ -8,6 +8,11 @@ export function renderRest(state: GameState, dispatch: (a: Action) => void): HTM
   const wouldHeal = Math.min(state.player.maxBudget, state.player.budget + healAmount) - state.player.budget;
   const firstUpgradable = state.deck.find(c => !c.upgraded);
 
+  const canScavenge = state.player.hotfixes.length < 3;
+  const scavengeDesc = canScavenge
+    ? "Take a random Hotfix (one-use consumable)"
+    : "Hotfix slots full";
+
   root.innerHTML = `
     <style>
       .scene-rest { flex: 1; display: flex; flex-direction: column;
@@ -38,6 +43,10 @@ export function renderRest(state: GameState, dispatch: (a: Action) => void): HTM
         <h3>Upgrade</h3>
         <p>${firstUpgradable ? `Upgrade: ${firstUpgradable.name}` : "Nothing upgradeable"}</p>
       </div>
+      <div class="rest-choice ${canScavenge ? "" : "disabled"}" data-option="scavenge">
+        <h3>Emergency Supplies</h3>
+        <p>${scavengeDesc}</p>
+      </div>
     </div>
   `;
 
@@ -45,6 +54,8 @@ export function renderRest(state: GameState, dispatch: (a: Action) => void): HTM
     el.addEventListener("click", () => {
       if (el.dataset.option === "upgrade") {
         dispatch({ type: "SHOW_UPGRADE_PICKER" });
+      } else if (el.dataset.option === "scavenge") {
+        dispatch({ type: "CHOOSE_REST_OPTION", option: "scavenge" });
       } else {
         dispatch({ type: "CHOOSE_REST_OPTION", option: "refresh" });
       }

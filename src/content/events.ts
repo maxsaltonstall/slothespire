@@ -9,7 +9,8 @@ export type EventOutcome =
   | { kind: "loseCredits"; amount: number }
   | { kind: "loseMaxBudget"; amount: number }
   | { kind: "gainCard"; rarity: "common" | "uncommon" | "rare" }
-  | { kind: "addCurse" };
+  | { kind: "addCurse" }
+  | { kind: "gainHotfix"; hotfixId: string };
 
 export interface IncidentEvent {
   id: string;
@@ -34,7 +35,7 @@ export const EVENTS: IncidentEvent[] = [
     title: "Heroic Engineer",
     text: "A senior engineer offers to stay up all night and manually patch the issue. 'Don't page anyone, I've got this,' they say. Truly inspiring.",
     choices: [
-      { text: "Accept their sacrifice", outcome: { kind: "gainCard", rarity: "rare" } },
+      { text: "Accept their sacrifice", outcome: { kind: "gainHotfix", hotfixId: "runbook_hotfix" } },
       { text: "Insist on proper on-call rotation", outcome: { kind: "gainCredits", amount: 30 } },
     ],
   },
@@ -63,7 +64,7 @@ export const EVENTS: IncidentEvent[] = [
     text: "The engineer going off-call insists everything is fine. The only open incident is labeled 'investigating.' There are seven of them.",
     choices: [
       { text: "Accept the handoff cheerfully", outcome: { kind: "nothing" } },
-      { text: "Spend an hour doing a proper status review", outcome: { kind: "gainCredits", amount: 40 } },
+      { text: "Spend an hour doing a proper status review", outcome: { kind: "gainHotfix", hotfixId: "caffeine_hotfix" } },
       { text: "Immediately page the departing engineer back", outcome: { kind: "addCurse" } },
     ],
   },

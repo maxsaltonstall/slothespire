@@ -7,7 +7,8 @@ export type EffectSpec =
   | { kind: "draw"; amount: number }
   | { kind: "restoreBudget"; amount: number }
   | { kind: "applyStatus"; status: StatusId; stacks: number; target: "single" | "all" | "self" }
-  | { kind: "removeStatus"; status: StatusId; target: "self" | "single" };
+  | { kind: "removeStatus"; status: StatusId; target: "self" | "single" }
+  | { kind: "gainEnergy"; amount: number };
 
 export interface CardDef {
   id: string;

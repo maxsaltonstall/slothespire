@@ -30,6 +30,7 @@ function effectSpecText(e: EffectSpec, perTurn = false): string {
       return `Apply ${s} ${e.stacks}${tgt}${suffix}`;
     }
     case "removeStatus":  return `Remove ${e.status.replace(/_/g, " ")}${suffix}`;
+    case "gainEnergy":   return `+${e.amount} Energy${suffix}`;
   }
 }
 
