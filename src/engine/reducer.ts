@@ -78,14 +78,15 @@ export function reduce(state: GameState, action: Action): GameState {
       const isPower = card.type === "power";
       const isExhaust = def.exhaust === true;
 
-      // Remove from hand, deduct energy, route to correct pile
+      // Remove from hand, deduct energy, and route immediately to power/exhaust piles.
+      // Normal (non-exhaust) cards are NOT added to discard yet — they go in after all
+      // effects resolve, preventing draw effects from reshuffling this card back in.
       let s: GameState = {
         ...state,
         player: {
           ...state.player,
           energy: state.player.energy - Math.max(0, card.cost),
           hand: state.player.hand.filter(c => c.instanceId !== cardInstanceId),
-          discard: isPower || isExhaust ? state.player.discard : [...state.player.discard, card],
           exhaust: isExhaust ? [...state.player.exhaust, card] : state.player.exhaust,
         },
         combat: isPower && state.combat
@@ -173,6 +174,14 @@ export function reduce(state: GameState, action: Action): GameState {
       // Loss check
       if (s.player.budget <= 0) {
         return { ...s, scene: "lost", combat: undefined };
+      }
+
+      // Add normal (non-power, non-exhaust) cards to discard NOW — after all effects.
+      // Exhaust cards were already routed above; power cards go to activePowers.
+      // Delaying the discard here prevents draw effects from reshuffling this card
+      // back into the draw pile during its own effect resolution.
+      if (!isPower && !isExhaust) {
+        s = { ...s, player: { ...s.player, discard: [...s.player.discard, card] } };
       }
 
       // Fire onCardPlayed relic hooks
