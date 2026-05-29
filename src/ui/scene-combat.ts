@@ -6,6 +6,7 @@ import { RELIC_DEFS } from "../content/relics";
 import { getIntent } from "../content/enemies";
 import { isMuted, toggleMute, sfx } from "./sfx";
 import { STATUS_TOOLTIPS, cardEffectsText } from "./tooltip";
+import { showDeckModal } from "./deck-modal";
 
 function intentLabel(intent: Intent | undefined): { icon: string; text: string; colorClass: string } {
   if (!intent) return { icon: "?", text: "Unknown", colorClass: "intent-unknown" };
@@ -374,6 +375,7 @@ export function renderCombat(state: GameState, dispatch: (a: Action) => void): H
 
     <div class="sc-foot">
       <button class="sc-footer-btn" id="sc-codex-btn">📖 Codex</button>
+      <button class="sc-footer-btn" id="sc-deck-btn">📋 Deck (${state.deck.length})</button>
       <button class="sc-footer-btn" id="sc-mute-btn" title="Toggle sound">${isMuted() ? "🔇" : "🔊"}</button>
       <button class="sc-footer-btn sc-quit-btn" id="sc-quit-btn">QUIT</button>
       <span class="right">seed: ${state.meta.seed}</span>
@@ -390,6 +392,10 @@ export function renderCombat(state: GameState, dispatch: (a: Action) => void): H
 
   root.querySelector<HTMLButtonElement>("#sc-codex-btn")?.addEventListener("click", () =>
     dispatch({ type: "GO_TO_CODEX", returnScene: "combat" })
+  );
+
+  root.querySelector<HTMLButtonElement>("#sc-deck-btn")?.addEventListener("click", () =>
+    showDeckModal(state)
   );
 
   root.querySelector<HTMLButtonElement>("#sc-mute-btn")?.addEventListener("click", (e) => {

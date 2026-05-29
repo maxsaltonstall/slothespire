@@ -2,6 +2,7 @@ import type { GameState, MapNode } from "../engine/state";
 import type { Action } from "../engine/actions";
 import { MAP_NODE_TOOLTIPS } from "./tooltip";
 import { RELIC_DEFS } from "../content/relics";
+import { showDeckModal } from "./deck-modal";
 
 const NODE_ICONS: Record<MapNode["type"], string> = {
   combat: "⚔",
@@ -94,6 +95,10 @@ export function renderMap(state: GameState, dispatch: (a: Action) => void): HTML
       .map-footer { display: flex; align-items: center; gap: 16px;
         font-family: var(--font-display); font-size: 11px; color: var(--color-text-dim); margin-top: 8px; }
       .map-footer .credits { color: var(--color-energy); }
+      .map-deck-btn { background: transparent; border: 0; box-shadow: none;
+        font-family: var(--font-display); font-size: 10px; color: var(--color-accent);
+        cursor: pointer; padding: 0; letter-spacing: 1px; }
+      .map-deck-btn:hover { color: var(--color-text); transform: none; }
       .map-quit { background: transparent; border: 0; box-shadow: none;
         font-family: var(--font-display); font-size: 10px; color: var(--color-text-dim);
         cursor: pointer; margin-left: auto; padding: 0; letter-spacing: 1px; transition: color 0.15s; }
@@ -108,9 +113,13 @@ export function renderMap(state: GameState, dispatch: (a: Action) => void): HTML
       <span>DECK <b>${state.deck.length}</b></span>
       <span class="credits">CREDITS <b>${state.credits}</b></span>
       ${relicChips ? `<span class="map-relics" title="Your relics">${relicChips}</span>` : ""}
+      <button class="map-deck-btn" id="map-deck-btn">📋 DECK (${state.deck.length})</button>
       <button class="map-quit" id="map-quit-btn">QUIT RUN</button>
     </div>
   `;
+
+  root.querySelector<HTMLButtonElement>("#map-deck-btn")!
+    .addEventListener("click", () => showDeckModal(state));
 
   root.querySelectorAll<HTMLDivElement>(".map-node.reachable").forEach(el => {
     el.addEventListener("click", () => {
