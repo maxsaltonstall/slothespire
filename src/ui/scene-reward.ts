@@ -46,8 +46,12 @@ export function renderReward(state: GameState, dispatch: (a: Action) => void): H
       return "";
     }).filter(Boolean).join(". ") ?? "";
     const typeIcon = card.type === "attack" ? "⚔" : card.type === "power" ? "✦" : "🛡";
+    const tip = def?.flavor
+      ? `<b>${card.name}</b><br>${effectText || "See card"}<br><i>${def.flavor}</i>`
+      : `<b>${card.name}</b>`;
     return `
-      <div class="reward-card" data-card-id="${card.instanceId}">
+      <div class="reward-card" data-card-id="${card.instanceId}"
+           data-tooltip="${tip.replace(/"/g, "&quot;")}">
         <div class="rc-cost">${card.cost < 0 ? "!" : card.cost}</div>
         <div class="rc-name">${card.name}</div>
         <div class="rc-art">${typeIcon}</div>

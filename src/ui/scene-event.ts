@@ -1,6 +1,18 @@
 import type { GameState } from "../engine/state";
 import type { Action } from "../engine/actions";
 import { EVENTS } from "../content/events";
+import type { EventOutcome } from "../content/events";
+
+function outcomeTooltip(outcome: EventOutcome): string {
+  switch (outcome.kind) {
+    case "nothing":        return "Nothing happens.";
+    case "gainCredits":    return `<b>+${outcome.amount} credits.</b>`;
+    case "loseCredits":    return `<b>−${outcome.amount} credits.</b>`;
+    case "loseMaxBudget":  return `<b>−${outcome.amount} maximum SLO Budget.</b> Permanent.`;
+    case "gainCard":       return `<b>Gain a ${outcome.rarity} card</b> for your deck.`;
+    case "addCurse":       return `<b><i>Tech Debt</i> added to your deck.</b> Costs 2 Budget/turn.`;
+  }
+}
 
 const SHARED_STYLES = `
   .scene-event { flex: 1; display: flex; flex-direction: column;
@@ -42,9 +54,10 @@ export function renderEvent(state: GameState, dispatch: (a: Action) => void): HT
   root.className = "scene-event";
   const event = EVENTS.find(e => e.id === state.currentEventId) ?? EVENTS[0];
 
-  const choicesHtml = event.choices.map((choice, idx) => `
-    <button class="event-choice" data-idx="${idx}">${choice.text}</button>
-  `).join("");
+  const choicesHtml = event.choices.map((choice, idx) => {
+    const tip = outcomeTooltip(choice.outcome).replace(/"/g, "&quot;");
+    return `<button class="event-choice" data-idx="${idx}" data-tooltip="${tip}">${choice.text}</button>`;
+  }).join("");
 
   root.innerHTML = `
     <style>${SHARED_STYLES}</style>

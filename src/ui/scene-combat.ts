@@ -2,8 +2,10 @@ import type { GameState, Card, Intent } from "../engine/state";
 import type { Action } from "../engine/actions";
 import { CARD_DEFS } from "../content/cards";
 import { HOTFIX_DEFS } from "../content/hotfixes";
+import { RELIC_DEFS } from "../content/relics";
 import { getIntent } from "../content/enemies";
 import { isMuted, toggleMute, sfx } from "./sfx";
+import { STATUS_TOOLTIPS } from "./tooltip";
 
 function intentLabel(intent: Intent | undefined): { icon: string; text: string; colorClass: string } {
   if (!intent) return { icon: "?", text: "Unknown", colorClass: "intent-unknown" };
@@ -71,7 +73,10 @@ export function renderCombat(state: GameState, dispatch: (a: Action) => void): H
     const stabPct = Math.round((enemy.stability / enemy.maxStability) * 100);
     const statusPills = Object.entries(enemy.statuses)
       .filter(([, v]) => (v ?? 0) > 0)
-      .map(([id, v]) => `<span class="sc-status-pill">${id.replace(/_/g, " ")} ${v}</span>`)
+      .map(([id, v]) => {
+        const tip = STATUS_TOOLTIPS[id] ?? `<b>${id.replace(/_/g, " ")}</b>`;
+        return `<span class="sc-status-pill" data-tooltip="${tip.replace(/"/g, "&quot;")}">${id.replace(/_/g, " ")} ${v}</span>`;
+      })
       .join("");
     const observabilityStacks = state.player.statuses.observability ?? 0;
     const futureIntentsHtml = observabilityStacks > 0
@@ -97,19 +102,48 @@ export function renderCombat(state: GameState, dispatch: (a: Action) => void): H
 
   const playerStatusPills = Object.entries(state.player.statuses)
     .filter(([, v]) => (v ?? 0) > 0)
-    .map(([id, v]) => `<span class="sc-status-pill sc-status-player">${id.replace(/_/g, " ")} ${v}</span>`)
+    .map(([id, v]) => {
+      const tip = STATUS_TOOLTIPS[id] ?? `<b>${id.replace(/_/g, " ")}</b>`;
+      return `<span class="sc-status-pill sc-status-player" data-tooltip="${tip.replace(/"/g, "&quot;")}">${id.replace(/_/g, " ")} ${v}</span>`;
+    })
     .join("");
 
   const powersHtml = state.combat.activePowers.length > 0
-    ? state.combat.activePowers.map(p => `<span class="sc-power-pill">${p.name}</span>`).join(" ")
+    ? state.combat.activePowers.map(p => {
+        const def = CARD_DEFS[p.defId];
+        const triggers = def?.powerTrigger ?? [];
+        const triggerText = triggers.map(e =>
+          e.kind === "headroom" ? `+${e.amount} Headroom/turn` :
+          e.kind === "draw" ? `Draw ${e.amount}/turn` :
+          e.kind === "burn" ? `Burn ${e.amount}/turn` :
+          e.kind === "restoreBudget" ? `Restore ${e.amount} Budget/turn` :
+          e.kind === "applyStatus" ? `Apply ${e.status.replace(/_/g, " ")} ${e.stacks}/turn` : ""
+        ).filter(Boolean).join(", ") || "See card for effect";
+        const tip = `<b>${p.name}${p.upgraded ? "+" : ""}</b><br>${triggerText}<br><i>${def?.flavor ?? ""}</i>`;
+        return `<span class="sc-power-pill" data-tooltip="${tip.replace(/"/g, "&quot;")}">${p.name}${p.upgraded ? "+" : ""}</span>`;
+      }).join(" ")
     : "<span style='opacity:0.3;font-size:10px'>no active powers</span>";
+
+  const relicsHtml = state.player.relics.length > 0
+    ? state.player.relics.map(rid => {
+        const rdef = RELIC_DEFS[rid];
+        if (!rdef) return "";
+        const tip = `<b>${rdef.name}</b><br>${rdef.description}<br><i>${rdef.flavor}</i>`;
+        return `<span class="sc-relic-chip" data-tooltip="${tip.replace(/"/g, "&quot;")}" title="${rdef.name}">✦</span>`;
+      }).join("")
+    : "";
 
   const hotfixSlots = [0, 1, 2].map(i => {
     const hfId = state.player.hotfixes[i];
     const def = hfId ? HOTFIX_DEFS[hfId] : null;
-    return def
-      ? `<button class="sc-hotfix-btn" data-hotfix="${hfId}">${def.name.replace(" Hotfix", "")}</button>`
-      : `<div class="sc-hotfix-empty">HOTFIX<br>—</div>`;
+    if (!def) return `<div class="sc-hotfix-empty">HOTFIX<br>—</div>`;
+    const effectText = def.effects.map(e =>
+      e.kind === "burn" ? `Deal ${e.amount} Burn` :
+      e.kind === "headroom" ? `+${e.amount} Headroom` :
+      e.kind === "restoreBudget" ? `Restore ${e.amount} Budget` : ""
+    ).filter(Boolean).join(", ");
+    const tip = `<b>${def.name}</b><br>${effectText}<br><i>${def.flavor}</i>`;
+    return `<button class="sc-hotfix-btn" data-hotfix="${hfId}" data-tooltip="${tip.replace(/"/g, "&quot;")}">${def.name.replace(" Hotfix", "")}</button>`;
   }).join("");
 
   root.innerHTML = `
@@ -269,6 +303,9 @@ export function renderCombat(state: GameState, dispatch: (a: Action) => void): H
       .sc-hotfix-btn { width: 60px; padding: 3px 2px; font-size: 8px; font-family: var(--font-display); background: var(--color-base-deep); color: var(--color-pop); border: 1px solid var(--color-pop); border-radius: 3px; cursor: pointer; letter-spacing: 0.5px; }
       .sc-hotfix-btn:hover { background: var(--color-pop); color: white; }
       .sc-hotfix-empty { width: 60px; padding: 3px 2px; text-align: center; border: 1px dashed var(--color-border-low); border-radius: 3px; font-size: 9px; color: var(--color-text-dim); }
+      .sc-relics { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 4px; }
+      .sc-relic-chip { font-size: 13px; color: var(--color-energy); cursor: default;
+        filter: drop-shadow(0 0 3px var(--color-energy)); }
     </style>
 
     <div class="sc-topbar">
@@ -298,6 +335,7 @@ export function renderCombat(state: GameState, dispatch: (a: Action) => void): H
         <div class="sc-budget-num">${budget} / ${maxBudget}</div>
       </div>
       <div class="sc-headroom">HEADROOM<br><b>${headroom}</b></div>
+      ${relicsHtml ? `<div class="sc-relics">${relicsHtml}</div>` : ""}
       <div class="sc-player-statuses">${playerStatusPills || "<span style='opacity:0.4;font-size:9px'>no statuses</span>"}</div>
     </div>
 

@@ -125,3 +125,17 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: 1px; }
 .at-body { font-family: var(--font-display); }
 .at-label { font-size: 8px; letter-spacing: 2px; color: var(--color-energy); opacity: 0.8; }
 .at-name  { font-size: 13px; color: var(--color-text); letter-spacing: 1px; }
+
+/* Tooltip */
+#game-tooltip {
+  position: absolute; z-index: 99999;
+  background: var(--color-base-deep); color: var(--color-text);
+  border: 1px solid var(--color-accent); border-radius: 5px;
+  padding: 7px 11px; font-size: 11px; line-height: 1.55;
+  font-family: var(--font-body); max-width: 220px;
+  box-shadow: 0 0 14px rgba(0,255,209,0.3);
+  pointer-events: none; word-wrap: break-word;
+}
+#game-tooltip b  { color: var(--color-accent); font-family: var(--font-display); }
+#game-tooltip em { color: var(--color-energy); font-style: normal; }
+#game-tooltip i  { color: var(--color-pop); font-style: normal; }

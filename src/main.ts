@@ -18,6 +18,7 @@ import { renderAchievements } from "./ui/scene-achievements";
 import { animateAttack, animateDefend } from "./ui/animations";
 import { CARD_DEFS } from "./content/cards";
 import { sfx } from "./ui/sfx";
+import { initTooltips } from "./ui/tooltip";
 
 const root = document.getElementById("app");
 if (!root) throw new Error("missing #app root");
@@ -291,3 +292,4 @@ function checkAchievements(
 }
 
 render();
+initTooltips();

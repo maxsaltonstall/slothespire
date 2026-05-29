@@ -1,5 +1,7 @@
 import type { GameState, MapNode } from "../engine/state";
 import type { Action } from "../engine/actions";
+import { MAP_NODE_TOOLTIPS } from "./tooltip";
+import { RELIC_DEFS } from "../content/relics";
 
 const NODE_ICONS: Record<MapNode["type"], string> = {
   combat: "⚔",
@@ -50,13 +52,21 @@ export function renderMap(state: GameState, dispatch: (a: Action) => void): HTML
         isCurrent ? "current" : "",
       ].filter(Boolean).join(" ");
       return `
-        <div class="${classes}" data-node-id="${node.id}" title="${NODE_LABELS[node.type]}">
+        <div class="${classes}" data-node-id="${node.id}"
+             data-tooltip="${MAP_NODE_TOOLTIPS[node.type]}">
           <div class="node-icon">${NODE_ICONS[node.type]}</div>
           <div class="node-label">${NODE_LABELS[node.type]}</div>
         </div>
       `;
     }).join("");
     return `<div class="map-row">${nodesHtml}</div>`;
+  }).join("");
+
+  const relicChips = state.player.relics.map(rid => {
+    const rdef = RELIC_DEFS[rid];
+    if (!rdef) return "";
+    const tip = `<b>${rdef.name}</b><br>${rdef.description}`;
+    return `<span class="map-relic-chip" data-tooltip="${tip.replace(/"/g, "&quot;")}" title="${rdef.name}">✦</span>`;
   }).join("");
 
   root.innerHTML = `
@@ -88,6 +98,8 @@ export function renderMap(state: GameState, dispatch: (a: Action) => void): HTML
         font-family: var(--font-display); font-size: 10px; color: var(--color-text-dim);
         cursor: pointer; margin-left: auto; padding: 0; letter-spacing: 1px; transition: color 0.15s; }
       .map-quit.confirming { color: var(--color-danger); text-shadow: var(--glow-danger); }
+      .map-relics { display: flex; gap: 3px; align-items: center; }
+      .map-relic-chip { color: var(--color-energy); font-size: 13px; cursor: default; }
     </style>
     <div class="map-header">// ACT ${act} · ${act === 1 ? "Single-Service SLO" : "User-Journey SLO"}</div>
     <div class="map-rows">${rowsHtml}</div>
@@ -95,6 +107,7 @@ export function renderMap(state: GameState, dispatch: (a: Action) => void): HTML
       <span>SLO BUDGET <b>${state.player.budget}/${state.player.maxBudget}</b></span>
       <span>DECK <b>${state.deck.length}</b></span>
       <span class="credits">CREDITS <b>${state.credits}</b></span>
+      ${relicChips ? `<span class="map-relics" title="Your relics">${relicChips}</span>` : ""}
       <button class="map-quit" id="map-quit-btn">QUIT RUN</button>
     </div>
   `;
