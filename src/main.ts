@@ -15,7 +15,7 @@ import { renderUpgrading } from "./ui/scene-upgrading";
 import * as codex from "./engine/codex";
 import { unlock as unlockAchievement, showToast, ACHIEVEMENT_DEFS } from "./engine/achievements";
 import { renderAchievements } from "./ui/scene-achievements";
-import { animateAttack, animateDefend } from "./ui/animations";
+import { animateAttack, animateDefend, animateEnemyTurn } from "./ui/animations";
 import { CARD_DEFS } from "./content/cards";
 import { sfx } from "./ui/sfx";
 import { initTooltips } from "./ui/tooltip";
@@ -134,28 +134,44 @@ function triggerCombatAnimation(
   prev: GameState,
   next: GameState
 ): number {
-  if (action.type !== "PLAY_CARD") return 0;
+  // ── Player plays a card ──────────────────────────────────────────
+  if (action.type === "PLAY_CARD") {
+    const card = prev.player.hand.find(c => c.instanceId === action.cardInstanceId);
+    if (!card || !prev.combat) return 0;
 
-  const card = prev.player.hand.find(c => c.instanceId === action.cardInstanceId);
-  if (!card || !prev.combat) return 0;
+    if (card.type === "attack") {
+      const targetId = action.targetId ?? prev.combat.enemies[0]?.instanceId;
+      if (!targetId) return 0;
+      const before = prev.combat.enemies.find(e => e.instanceId === targetId)?.stability ?? 0;
+      const after  = next.combat?.enemies.find(e => e.instanceId === targetId)?.stability ?? before;
+      animateAttack(targetId, Math.max(0, before - after));
+      return 400;
+    }
 
-  if (card.type === "attack") {
-    const targetId = action.targetId ?? prev.combat.enemies[0]?.instanceId;
-    if (!targetId) return 0;
-    const before = prev.combat.enemies.find(e => e.instanceId === targetId)?.stability ?? 0;
-    const after  = next.combat?.enemies.find(e => e.instanceId === targetId)?.stability ?? before;
-    animateAttack(targetId, Math.max(0, before - after));
-    return 400;
+    const def = CARD_DEFS[card.defId];
+    const hasHeadroomEffect = def?.effects.some(e => e.kind === "headroom") ||
+                               def?.upgradedEffects?.some(e => e.kind === "headroom");
+    if ((card.type === "skill" || card.type === "power") && hasHeadroomEffect) {
+      const gained = next.player.headroom - prev.player.headroom;
+      animateDefend(Math.max(0, gained));
+      return 540;
+    }
+    return 0;
   }
 
-  // Skill or power: show shield if headroom was gained
-  const def = CARD_DEFS[card.defId];
-  const hasHeadroomEffect = def?.effects.some(e => e.kind === "headroom") ||
-                             def?.upgradedEffects?.some(e => e.kind === "headroom");
-  if ((card.type === "skill" || card.type === "power") && hasHeadroomEffect) {
-    const gained = next.player.headroom - prev.player.headroom;
-    animateDefend(Math.max(0, gained));
-    return 540;
+  // ── Enemy turn ───────────────────────────────────────────────────
+  if (action.type === "END_TURN" && prev.combat) {
+    const totalDamage = Math.max(0, prev.player.budget - next.player.budget);
+
+    // Build per-enemy animation descriptors from the intents that were active
+    const enemyAnims = prev.combat.enemies.map(enemy => ({
+      instanceId: enemy.instanceId,
+      intentKind: prev.combat!.intentByEnemy[enemy.instanceId]?.kind ?? "unknown",
+      damage: totalDamage, // approximate — good enough for animation
+    })).filter(e => e.intentKind !== "unknown" && e.intentKind !== "multi");
+
+    if (enemyAnims.length === 0) return 0;
+    return animateEnemyTurn(enemyAnims, totalDamage);
   }
 
   return 0;
