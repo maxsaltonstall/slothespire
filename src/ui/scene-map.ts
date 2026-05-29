@@ -134,5 +134,79 @@ export function renderMap(state: GameState, dispatch: (a: Action) => void): HTML
     });
   }
 
+  // Draw connection lines after layout — needs rAF so nodes are positioned
+  requestAnimationFrame(() => drawConnections(root, state));
+
   return root;
+}
+
+function drawConnections(root: HTMLElement, state: GameState): void {
+  const container = root.querySelector<HTMLElement>(".map-rows");
+  if (!container) return;
+
+  const { nodes, currentNodeId, visitedNodeIds } = state.map;
+
+  const reachable = new Set<string>();
+  if (!currentNodeId) {
+    nodes[0]?.forEach(n => reachable.add(n.id));
+  } else {
+    nodes.flat().find(n => n.id === currentNodeId)?.next.forEach(id => reachable.add(id));
+  }
+
+  // SVG overlay
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.style.cssText = "position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:visible;";
+  container.style.position = "relative";
+  container.appendChild(svg);
+
+  const cRect = container.getBoundingClientRect();
+
+  for (const row of nodes) {
+    for (const node of row) {
+      const fromEl = root.querySelector<HTMLElement>(`[data-node-id="${node.id}"]`);
+      if (!fromEl) continue;
+      const fr = fromEl.getBoundingClientRect();
+      const fx = fr.left + fr.width / 2 - cRect.left;
+      const fy = fr.top + fr.height / 2 - cRect.top;
+
+      for (const nextId of node.next) {
+        const toEl = root.querySelector<HTMLElement>(`[data-node-id="${nextId}"]`);
+        if (!toEl) continue;
+        const tr = toEl.getBoundingClientRect();
+        const tx = tr.left + tr.width / 2 - cRect.left;
+        const ty = tr.top + tr.height / 2 - cRect.top;
+
+        // Determine visual style
+        const bothVisited = visitedNodeIds.includes(node.id) && visitedNodeIds.includes(nextId);
+        const isCurrentEdge = node.id === currentNodeId && reachable.has(nextId);
+        const isStartEdge = !currentNodeId && row === nodes[0] && reachable.has(nextId);
+
+        let stroke = "#2a3260";
+        let width = "1";
+        let opacity = "0.35";
+        let glow = "";
+
+        if (isCurrentEdge || isStartEdge) {
+          stroke = "#00ffd1";
+          width = "1.5";
+          opacity = "0.75";
+          glow = "drop-shadow(0 0 3px #00ffd1)";
+        } else if (bothVisited) {
+          stroke = "#6b7299";
+          opacity = "0.5";
+        }
+
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", String(fx));
+        line.setAttribute("y1", String(fy));
+        line.setAttribute("x2", String(tx));
+        line.setAttribute("y2", String(ty));
+        line.setAttribute("stroke", stroke);
+        line.setAttribute("stroke-width", width);
+        line.setAttribute("opacity", opacity);
+        if (glow) line.setAttribute("filter", glow);
+        svg.appendChild(line);
+      }
+    }
+  }
 }
