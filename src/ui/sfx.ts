@@ -132,6 +132,12 @@ export const sfx = {
     tone(1400, 0.04, "square", 0.1);
   },
 
+  /** Low thud — card play failed (not enough energy) */
+  cardFail() {
+    tone(180, 0.18, "sawtooth", 0.2, 280);
+    tone(120, 0.14, "square", 0.1, 0, 0.04);
+  },
+
   /** Short downward blip — END TURN */
   endTurn() {
     tone(380, 0.1, "sine", 0.2, 520);

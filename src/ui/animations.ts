@@ -15,6 +15,20 @@ function floatNumber(anchorEl: Element, text: string, color: string): void {
   setTimeout(() => el.remove(), 700);
 }
 
+/** Card can't be played — shake it red and pulse the energy orb. */
+export function animateCardFail(cardInstanceId: string): void {
+  const card = document.querySelector<HTMLElement>(`[data-card-id="${cardInstanceId}"]`);
+  if (card) {
+    card.classList.add("anim-card-fail");
+    card.addEventListener("animationend", () => card.classList.remove("anim-card-fail"), { once: true });
+  }
+  const orb = document.querySelector<HTMLElement>(".sc-energy-orb");
+  if (orb) {
+    orb.classList.add("anim-energy-fail");
+    orb.addEventListener("animationend", () => orb.classList.remove("anim-energy-fail"), { once: true });
+  }
+}
+
 /** Shake the enemy sprite and show a floating damage number. */
 export function animateAttack(enemyInstanceId: string, damage: number): void {
   const container = document.querySelector<HTMLElement>(`[data-enemy-id="${enemyInstanceId}"]`);

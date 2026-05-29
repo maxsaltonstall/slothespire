@@ -15,7 +15,7 @@ import { renderUpgrading } from "./ui/scene-upgrading";
 import * as codex from "./engine/codex";
 import { unlock as unlockAchievement, showToast, ACHIEVEMENT_DEFS } from "./engine/achievements";
 import { renderAchievements } from "./ui/scene-achievements";
-import { animateAttack, animateDefend, animateEnemyTurn } from "./ui/animations";
+import { animateAttack, animateDefend, animateEnemyTurn, animateCardFail } from "./ui/animations";
 import { CARD_DEFS } from "./content/cards";
 import { sfx } from "./ui/sfx";
 import { initTooltips } from "./ui/tooltip";
@@ -61,6 +61,18 @@ function dispatch(action: Action): void {
   for (const r of state.player.relics) codex.unlock(r);
   if (state.combat) {
     for (const e of state.combat.enemies) codex.unlock(e.defId);
+  }
+
+  // Detect failed card play (card still in hand after action = reducer rejected it)
+  if (action.type === "PLAY_CARD") {
+    const stillInHand = state.player.hand.some(c => c.instanceId === action.cardInstanceId);
+    if (stillInHand) {
+      // Card wasn't played — show fail feedback and skip all other effects
+      animateCardFail(action.cardInstanceId);
+      sfx.cardFail();
+      scheduleRender(0);
+      return;
+    }
   }
 
   // Sound effects

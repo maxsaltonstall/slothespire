@@ -64,6 +64,7 @@ function renderCard(card: Card, dispatch: (a: Action) => void, targetId: string 
 
   const el = document.createElement("div");
   el.className = "sc-card";
+  el.dataset.cardId = card.instanceId;
   el.dataset.tooltip = tooltipContent.replace(/"/g, "&quot;");
   el.innerHTML = `
     <div class="sc-card-cost">${card.cost < 0 ? "☠" : card.cost}</div>

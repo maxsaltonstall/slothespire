@@ -146,6 +146,31 @@ h1, h2, h3 { font-family: var(--font-display); letter-spacing: 1px; }
   color: var(--color-pop); text-shadow: 0 0 8px var(--color-pop);
 }
 
+/* Failed card play — card shakes red */
+@keyframes card-fail {
+  0%   { transform: translateX(0)   translateY(-6px); filter: brightness(1); }
+  15%  { transform: translateX(-9px) translateY(-6px); filter: brightness(1.8) saturate(3) hue-rotate(300deg); }
+  35%  { transform: translateX(9px)  translateY(-6px); }
+  55%  { transform: translateX(-5px) translateY(-6px); filter: brightness(1.3); }
+  72%  { transform: translateX(3px)  translateY(-6px); }
+  88%  { transform: translateX(-1px) translateY(-6px); }
+  100% { transform: translateX(0)   translateY(-6px); filter: brightness(1); }
+}
+.anim-card-fail {
+  animation: card-fail 0.32s ease-out !important;
+  outline: 1.5px solid var(--color-danger) !important;
+  box-shadow: 0 0 10px rgba(255,74,74,0.7), var(--glow-danger) !important;
+}
+
+/* Energy orb pulses when short on energy */
+@keyframes energy-fail {
+  0%,100% { transform: scale(1); filter: brightness(1); }
+  25%     { transform: scale(1.2); filter: brightness(2) hue-rotate(220deg); box-shadow: 0 0 20px rgba(255,74,74,0.9); }
+  55%     { transform: scale(1.08); filter: brightness(1.4); }
+  78%     { transform: scale(1.03); }
+}
+.anim-energy-fail { animation: energy-fail 0.35s ease-out; }
+
 /* Achievement toast */
 @keyframes toast-slide {
   0%   { transform: translateX(110%); opacity: 0; }
