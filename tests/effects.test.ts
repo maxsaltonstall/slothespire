@@ -154,10 +154,15 @@ describe("consumeStatus", () => {
 
 describe("tickStatuses", () => {
   it("decrements decaying status stacks by 1 and removes when reaching 0", () => {
-    const statuses: StatusMap = { customer_facing: 2, flow: 1 };
+    const statuses: StatusMap = { customer_facing: 2 };
     const ticked = tickStatuses(statuses);
     expect(ticked.customer_facing).toBe(1);
-    expect(ticked.flow).toBeUndefined();
+  });
+
+  it("flow is NOT ticked — it is consumed entirely by END_TURN after firing", () => {
+    const statuses: StatusMap = { flow: 2 };
+    const ticked = tickStatuses(statuses);
+    expect(ticked.flow).toBe(2); // unchanged by tick
   });
 
   it("does not change permanent statuses (pressure, stability, observability)", () => {

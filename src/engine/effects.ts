@@ -53,7 +53,8 @@ export function drawCards(state: GameState, count: number): GameState {
 }
 
 const DECAYING_STATUSES: StatusId[] = [
-  "customer_facing", "throttled", "toil", "flow", "on_call_fatigue", "observability",
+  "customer_facing", "throttled", "toil", "on_call_fatigue", "observability",
+  // "flow" is NOT in this list — it is consumed entirely when triggered (see END_TURN)
 ];
 
 export function applyStatus(

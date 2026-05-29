@@ -288,6 +288,9 @@ export function reduce(state: GameState, action: Action): GameState {
         combat: { ...s.combat!, turn: nextTurn, phase: "player", intentByEnemy: nextIntents },
       };
 
+      // Flow is consumed entirely after firing (not decayed) — reset to 0 now
+      if (flowBonus > 0) s = consumeStatus(s, "player", "flow");
+
       // Phase 10: Power triggers (after enemy attacked, so headroom is for next enemy turn)
       for (const powerCard of activePowers) {
         const def = CARD_DEFS[powerCard.defId];

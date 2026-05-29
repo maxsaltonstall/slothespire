@@ -8,7 +8,7 @@ export const STATUS_TOOLTIPS: Record<string, string> = {
   pressure:        "<b>Pressure</b><br>Each attack deals +N flat Burn. Permanent.",
   stability:       "<b>Stability</b><br>Headroom cards grant +N extra. Permanent.",
   toil:            "<b>Toil</b><br>Lose 1 Energy at turn start. Decays 1/round.",
-  flow:            "<b>Flow</b><br>Gain 1 Energy at turn start. Decays 1/round.",
+  flow:            "<b>Flow N</b><br>Gain +N Energy at start of next turn. Consumed entirely.",
   burnout:         "<b>Burnout</b><br>Draw 1 fewer card next turn. One-shot.",
   confidence:      "<b>Confidence</b><br>Next attack deals double Burn. One-shot.",
   on_call_fatigue: "<b>On-Call Fatigue</b><br>Lose 2 Budget at end of turn. Decays 1/round.",
