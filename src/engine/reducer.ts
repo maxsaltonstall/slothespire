@@ -11,6 +11,38 @@ import { EVENTS } from "../content/events";
 import { generateCardReward, COMBAT_CREDITS, ELITE_CREDITS, TREASURE_CREDITS } from "../content/rewards";
 import { RELIC_DEFS, generateRelicReward, resetCombatRelicState } from "../content/relics";
 
+/** Apply a burn effect (single or all enemies), consuming Confidence if present.
+ *  burnWithModifiers already applies the Confidence multiplier, so we consume it
+ *  AFTER computing damage — not before.
+ */
+function applyBurnEffect(
+  s: GameState,
+  amount: number,
+  target: "single" | "all" | undefined,
+  targetId: string | null
+): GameState {
+  if (target === "all") {
+    const enemies = s.combat?.enemies ?? [];
+    if (enemies.length === 0) return s;
+    // Compute damage using current statuses (including confidence if active)
+    let fresh = s;
+    for (const enemy of enemies) {
+      const dmg = burnWithModifiers(amount, fresh.player.statuses, enemy.statuses);
+      fresh = burnEnemy(fresh, enemy.instanceId, dmg);
+    }
+    // Consume confidence once after all hits
+    if (fresh.player.statuses.confidence) fresh = consumeStatus(fresh, "player", "confidence");
+    return fresh;
+  }
+  // single target (default) — same logic as before
+  const tid = targetId ?? s.combat?.enemies[0]?.instanceId;
+  if (!tid) return s;
+  const enemy = s.combat?.enemies.find(e => e.instanceId === tid);
+  const dmg = burnWithModifiers(amount, s.player.statuses, enemy?.statuses ?? {});
+  if (s.player.statuses.confidence) s = consumeStatus(s, "player", "confidence");
+  return burnEnemy(s, tid, dmg);
+}
+
 export function reduce(state: GameState, action: Action): GameState {
   switch (action.type) {
     case "START_RUN": {
@@ -67,19 +99,7 @@ export function reduce(state: GameState, action: Action): GameState {
       // Apply each effect
       for (const effect of effects) {
         if (effect.kind === "burn") {
-          const tid = targetId ?? s.combat?.enemies[0]?.instanceId;
-          if (tid) {
-            const enemy = s.combat?.enemies.find(e => e.instanceId === tid);
-            const finalDamage = burnWithModifiers(
-              effect.amount,
-              s.player.statuses,
-              enemy?.statuses ?? {}
-            );
-            if (s.player.statuses.confidence) {
-              s = consumeStatus(s, "player", "confidence");
-            }
-            s = burnEnemy(s, tid, finalDamage);
-          }
+          s = applyBurnEffect(s, effect.amount, effect.target, targetId);
         } else if (effect.kind === "selfBurn") {
           const selfBurnAmt = effect.amount;
           s = { ...s, player: { ...s.player, budget: s.player.budget - selfBurnAmt } };
@@ -335,13 +355,7 @@ export function reduce(state: GameState, action: Action): GameState {
 
       for (const effect of def.effects) {
         if (effect.kind === "burn") {
-          const tid = targetId ?? s.combat?.enemies[0]?.instanceId;
-          if (tid) {
-            const enemy = s.combat?.enemies.find(e => e.instanceId === tid);
-            const finalDamage = burnWithModifiers(effect.amount, s.player.statuses, enemy?.statuses ?? {});
-            if (s.player.statuses.confidence) s = consumeStatus(s, "player", "confidence");
-            s = burnEnemy(s, tid, finalDamage);
-          }
+          s = applyBurnEffect(s, effect.amount, effect.target, targetId);
         } else if (effect.kind === "headroom") {
           s = addHeadroom(s, headroomWithModifiers(effect.amount, s.player.statuses));
         } else if (effect.kind === "draw") {

@@ -1,7 +1,7 @@
 import type { Card, CardType, StatusId } from "../engine/state";
 
 export type EffectSpec =
-  | { kind: "burn"; amount: number }
+  | { kind: "burn"; amount: number; target?: "single" | "all" }
   | { kind: "selfBurn"; amount: number }
   | { kind: "headroom"; amount: number }
   | { kind: "draw"; amount: number }

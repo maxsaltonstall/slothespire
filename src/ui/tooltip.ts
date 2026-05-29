@@ -19,7 +19,7 @@ export const STATUS_TOOLTIPS: Record<string, string> = {
 function effectSpecText(e: EffectSpec, perTurn = false): string {
   const suffix = perTurn ? "/turn" : "";
   switch (e.kind) {
-    case "burn":          return `Burn ${e.amount}${suffix}`;
+    case "burn":          return `Burn ${e.amount}${e.target === "all" ? " (all)" : ""}${suffix}`;
     case "selfBurn":      return `Self-Burn ${e.amount}${suffix}`;
     case "headroom":      return `+${e.amount} Headroom${suffix}`;
     case "draw":          return `Draw ${e.amount}${suffix}`;
