@@ -56,10 +56,17 @@ function renderCard(card: Card, dispatch: (a: Action) => void, targetId: string 
   const { icon, colorClass } = cardIconFor(card.type);
   const effectText = cardEffectsText(card, def);
 
+  // Tooltip: show full effect text + upgrade preview (if not yet upgraded) + flavor
+  const upgradePreview = (!card.upgraded && (def?.upgradedEffects ?? def?.upgradedPowerTrigger))
+    ? `<br><em>Upgrade → ${cardEffectsText({ ...card, upgraded: true }, def)}</em>`
+    : "";
+  const tooltipContent = `<b>${card.name}</b><br>${effectText || "—"}${upgradePreview}${def?.flavor ? `<br><i>${def.flavor}</i>` : ""}`;
+
   const el = document.createElement("div");
   el.className = "sc-card";
+  el.dataset.tooltip = tooltipContent.replace(/"/g, "&quot;");
   el.innerHTML = `
-    <div class="sc-card-cost">${card.cost}</div>
+    <div class="sc-card-cost">${card.cost < 0 ? "☠" : card.cost}</div>
     <div class="sc-card-name">${card.name}</div>
     <div class="sc-card-art ${colorClass}">${icon}</div>
     <div class="sc-card-text">${effectText}</div>
