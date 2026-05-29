@@ -2,6 +2,7 @@ import type { GameState } from "../engine/state";
 import type { Action } from "../engine/actions";
 import { CARD_DEFS } from "../content/cards";
 import { RELIC_DEFS } from "../content/relics";
+import { cardEffectsText } from "./tooltip";
 
 export function renderReward(state: GameState, dispatch: (a: Action) => void): HTMLElement {
   const root = document.createElement("div");
@@ -36,15 +37,7 @@ export function renderReward(state: GameState, dispatch: (a: Action) => void): H
 
   const cardsHtml = offered.map(card => {
     const def = CARD_DEFS[card.defId];
-    const effectText = def?.effects.map(e => {
-      if (e.kind === "burn") return `Burn ${e.amount}`;
-      if (e.kind === "headroom") return `+${e.amount} Headroom`;
-      if (e.kind === "draw") return `Draw ${e.amount}`;
-      if (e.kind === "selfBurn") return `Self-Burn ${e.amount}`;
-      if (e.kind === "applyStatus") return `Apply ${e.status.replace(/_/g, " ")} ×${e.stacks}`;
-      if (e.kind === "restoreBudget") return `Restore ${e.amount} Budget`;
-      return "";
-    }).filter(Boolean).join(". ") ?? "";
+    const effectText = cardEffectsText(card, def);
     const typeIcon = card.type === "attack" ? "⚔" : card.type === "power" ? "✦" : "🛡";
     const tip = def?.flavor
       ? `<b>${card.name}</b><br>${effectText || "See card"}<br><i>${def.flavor}</i>`

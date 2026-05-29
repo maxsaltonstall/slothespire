@@ -5,7 +5,7 @@ import { HOTFIX_DEFS } from "../content/hotfixes";
 import { RELIC_DEFS } from "../content/relics";
 import { getIntent } from "../content/enemies";
 import { isMuted, toggleMute, sfx } from "./sfx";
-import { STATUS_TOOLTIPS } from "./tooltip";
+import { STATUS_TOOLTIPS, cardEffectsText } from "./tooltip";
 
 function intentLabel(intent: Intent | undefined): { icon: string; text: string; colorClass: string } {
   if (!intent) return { icon: "?", text: "Unknown", colorClass: "intent-unknown" };
@@ -54,12 +54,7 @@ function cardIconFor(type: Card["type"]): { icon: string; colorClass: string } {
 function renderCard(card: Card, dispatch: (a: Action) => void, targetId: string | null): HTMLElement {
   const def = CARD_DEFS[card.defId];
   const { icon, colorClass } = cardIconFor(card.type);
-  const effectText = def?.effects.map(e => {
-    if (e.kind === "burn") return `Burn ${e.amount}`;
-    if (e.kind === "headroom") return `+${e.amount} Headroom`;
-    if (e.kind === "draw") return `Draw ${e.amount}`;
-    return "";
-  }).join(". ") ?? "";
+  const effectText = cardEffectsText(card, def);
 
   const el = document.createElement("div");
   el.className = "sc-card";

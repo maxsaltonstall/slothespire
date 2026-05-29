@@ -1,6 +1,7 @@
 import type { GameState } from "../engine/state";
 import type { Action } from "../engine/actions";
 import { CARD_DEFS } from "../content/cards";
+import { cardEffectsText } from "./tooltip";
 
 export function renderUpgrading(state: GameState, dispatch: (a: Action) => void): HTMLElement {
   const root = document.createElement("div");
@@ -9,16 +10,9 @@ export function renderUpgrading(state: GameState, dispatch: (a: Action) => void)
 
   const cardsHtml = upgradeable.map(card => {
     const def = CARD_DEFS[card.defId];
-    const upgEffects = def?.upgradedEffects ?? def?.upgradedPowerTrigger;
-    const preview = upgEffects?.map(e => {
-      if (e.kind === "burn") return `Burn ${e.amount}`;
-      if (e.kind === "headroom") return `+${e.amount} Headroom`;
-      if (e.kind === "draw") return `Draw ${e.amount}`;
-      if (e.kind === "restoreBudget") return `Restore ${e.amount}`;
-      if (e.kind === "applyStatus") return `${e.status.replace(/_/g," ")} ${e.stacks}`;
-      if (e.kind === "removeStatus") return `Remove ${e.status.replace(/_/g," ")}`;
-      return "";
-    }).filter(Boolean).join(", ") ?? "improved";
+    // Show upgraded version text using the shared helper on a synthetic "upgraded" card
+    const upgradedCard = { ...card, upgraded: true };
+    const preview = cardEffectsText(upgradedCard, def) || "improved";
     return `
       <div class="upg-card" data-id="${card.instanceId}">
         <div class="uc-cost">${card.cost < 0 ? "☠" : card.cost}</div>
