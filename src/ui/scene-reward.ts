@@ -33,6 +33,44 @@ export function renderReward(state: GameState, dispatch: (a: Action) => void): H
     return root;
   }
 
+  // Multi-relic choice (from treasure nodes)
+  if (state.rewardRelics && state.rewardRelics.length > 0) {
+    const relicBoxes = state.rewardRelics.map(rid => {
+      const relic = RELIC_DEFS[rid];
+      if (!relic) return "";
+      return `
+        <div class="relic-choice-box" data-relic-id="${rid}">
+          <div class="relic-name">${relic.name}</div>
+          <div class="relic-product">${relic.product}</div>
+          <div class="relic-desc">${relic.description}</div>
+          <div class="relic-flavor">"${relic.flavor}"</div>
+          <button class="pick-relic-btn primary" data-relic="${rid}">TAKE THIS</button>
+        </div>
+      `;
+    }).join("");
+    root.innerHTML = `
+      <style>
+        .scene-reward { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; }
+        .relic-choices { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+        .relic-choice-box { padding: 24px; background: var(--color-base-deep); border: 1px solid var(--color-energy); border-radius: 8px; text-align: center; max-width: 280px; display: flex; flex-direction: column; gap: 8px; }
+        .relic-choice-box .relic-name { font-family: var(--font-display); font-size: 15px; color: var(--color-energy); }
+        .relic-choice-box .relic-product { font-size: 10px; color: var(--color-text-dim); font-family: var(--font-display); }
+        .relic-choice-box .relic-desc { font-size: 11px; line-height: 1.5; }
+        .relic-choice-box .relic-flavor { font-size: 9px; font-style: italic; opacity: 0.5; margin-top: auto; }
+        .pick-relic-btn { font-family: var(--font-display); font-size: 11px; letter-spacing: 1px; margin-top: 8px; }
+      </style>
+      <h2 style="font-family:var(--font-display);color:var(--color-energy);letter-spacing:3px;font-size:22px;">✦ TREASURE FOUND ✦</h2>
+      <p style="font-family:var(--font-display);font-size:11px;color:var(--color-text-dim);">Choose one relic to keep.</p>
+      <div class="relic-choices">${relicBoxes}</div>
+    `;
+    root.querySelectorAll<HTMLButtonElement>(".pick-relic-btn").forEach(btn => {
+      btn.addEventListener("click", () =>
+        dispatch({ type: "PICK_REWARD_RELIC", relicId: btn.dataset.relic! })
+      );
+    });
+    return root;
+  }
+
   const offered = state.rewardCards ?? [];
 
   const cardsHtml = offered.map(card => {
@@ -81,7 +119,7 @@ export function renderReward(state: GameState, dispatch: (a: Action) => void): H
     </style>
     <h2>CHOOSE A CARD</h2>
     <div class="reward-cards">${cardsHtml}</div>
-    <button class="reward-skip" id="skip-reward">SKIP</button>
+    <button class="reward-skip" id="skip-reward">SKIP (+30¢)</button>
   `;
 
   root.querySelectorAll<HTMLDivElement>(".reward-card").forEach(el => {

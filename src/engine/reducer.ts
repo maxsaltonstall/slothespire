@@ -180,12 +180,21 @@ export function reduce(state: GameState, action: Action): GameState {
         const isBoss = currentNode?.type === "boss";
         if (isBoss) {
           if (s.map.act === 1) {
+            // Build Act II map now so it's ready when the player accepts the relic
             const { nodes: act2Nodes, state: afterMap } = buildActMap(2, s);
-            return {
+            const act2State = {
               ...afterMap,
-              scene: "map",
+              map: { act: 2 as const, nodes: act2Nodes, currentNodeId: null, visitedNodeIds: [] },
+            };
+            // Show a relic reward before revealing Act II
+            const [relicId, afterRelic] = generateRelicReward(act2State);
+            return {
+              ...afterRelic,
+              scene: "reward",
               combat: undefined,
-              map: { act: 2, nodes: act2Nodes, currentNodeId: null, visitedNodeIds: [] },
+              rewardRelic: relicId,
+              rewardCards: undefined,
+              credits: s.credits + ELITE_CREDITS,
             };
           }
           return { ...s, scene: "won", combat: undefined };
@@ -442,12 +451,21 @@ export function reduce(state: GameState, action: Action): GameState {
         const isBoss = currentNode?.type === "boss";
         if (isBoss) {
           if (s.map.act === 1) {
+            // Build Act II map now so it's ready when the player accepts the relic
             const { nodes: act2Nodes, state: afterMap } = buildActMap(2, s);
-            return {
+            const act2State = {
               ...afterMap,
-              scene: "map",
+              map: { act: 2 as const, nodes: act2Nodes, currentNodeId: null, visitedNodeIds: [] },
+            };
+            // Show a relic reward before revealing Act II
+            const [relicId, afterRelic] = generateRelicReward(act2State);
+            return {
+              ...afterRelic,
+              scene: "reward",
               combat: undefined,
-              map: { act: 2, nodes: act2Nodes, currentNodeId: null, visitedNodeIds: [] },
+              rewardRelic: relicId,
+              rewardCards: undefined,
+              credits: s.credits + ELITE_CREDITS,
             };
           }
           return { ...s, scene: "won", combat: undefined };
@@ -616,9 +634,22 @@ export function reduce(state: GameState, action: Action): GameState {
         }
 
         case "treasure": {
-          const [relicId, afterRelic] = generateRelicReward(s);
-          s = afterRelic;
-          return { ...s, scene: "reward", rewardRelic: relicId, rewardCards: undefined, credits: s.credits + TREASURE_CREDITS };
+          // Generate two distinct relics; player picks one
+          const [relic1Id, s1] = generateRelicReward(s);
+          // Temporarily include relic1 so the second pick excludes it
+          const [relic2Id, s2] = generateRelicReward({
+            ...s1, player: { ...s1.player, relics: [...s1.player.relics, relic1Id] }
+          });
+          // Restore player state (neither relic is actually owned yet)
+          s = { ...s2, player: s1.player };
+          return {
+            ...s,
+            scene: "reward",
+            rewardRelics: [relic1Id, relic2Id],
+            rewardRelic: undefined,
+            rewardCards: undefined,
+            credits: s.credits + TREASURE_CREDITS,
+          };
         }
 
         default:
@@ -629,7 +660,8 @@ export function reduce(state: GameState, action: Action): GameState {
     case "PICK_REWARD_CARD": {
       const { cardInstanceId } = action;
       if (!cardInstanceId) {
-        return { ...state, scene: "map", rewardCards: undefined };
+        // Skipping gives 30 credits — makes "skip" a real choice
+        return { ...state, scene: "map", rewardCards: undefined, credits: state.credits + 30 };
       }
       const picked = (state.rewardCards ?? []).find(c => c.instanceId === cardInstanceId);
       if (!picked) return state;
@@ -764,13 +796,14 @@ export function reduce(state: GameState, action: Action): GameState {
     }
 
     case "PICK_REWARD_RELIC": {
-      const relicId = state.rewardRelic;
+      const relicId = action.relicId ?? state.rewardRelic;
       if (!relicId) return { ...state, scene: "map" };
       return {
         ...state,
         scene: "map",
         player: { ...state.player, relics: [...state.player.relics, relicId] },
         rewardRelic: undefined,
+        rewardRelics: undefined,
       };
     }
 

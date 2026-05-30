@@ -92,6 +92,7 @@ export interface GameState {
   rewardCards?: Card[];
   shopCards?: Card[];
   rewardRelic?: string;
+  rewardRelics?: string[];
   codexReturnScene?: "map" | "title" | "combat";
   eventOutcomeText?: string;    // shown on event_outcome screen before returning to map
 }

@@ -59,7 +59,9 @@ function runOne(seed: string): { result: "won" | "lost"; nodes: number } {
         break;
       }
       case "reward":
-        if (s.rewardRelic) {
+        if (s.rewardRelics?.length) {
+          s = reduce(s, { type: "PICK_REWARD_RELIC", relicId: s.rewardRelics[0] });
+        } else if (s.rewardRelic) {
           s = reduce(s, { type: "PICK_REWARD_RELIC" });
         } else {
           s = reduce(s, { type: "PICK_REWARD_CARD", cardInstanceId: s.rewardCards?.[0]?.instanceId ?? null });
