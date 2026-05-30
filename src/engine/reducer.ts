@@ -53,6 +53,13 @@ function applyBurnEffect(
     for (const enemy of enemies) {
       const dmg = burnWithModifiers(amount, fresh.player.statuses, enemy.statuses);
       fresh = burnEnemy(fresh, enemy.instanceId, dmg);
+      const justDied = fresh.combat?.enemies.find(e => e.instanceId === enemy.instanceId && e.stability <= 0);
+      if (justDied) {
+        for (const relicId of fresh.player.relics) {
+          const relic = RELIC_DEFS[relicId];
+          if (relic?.onEnemyDeath) fresh = relic.onEnemyDeath(fresh, justDied);
+        }
+      }
     }
     // Consume confidence once after all hits
     if (fresh.player.statuses.confidence) fresh = consumeStatus(fresh, "player", "confidence");
@@ -64,7 +71,15 @@ function applyBurnEffect(
   const enemy = s.combat?.enemies.find(e => e.instanceId === tid);
   const dmg = burnWithModifiers(amount, s.player.statuses, enemy?.statuses ?? {});
   if (s.player.statuses.confidence) s = consumeStatus(s, "player", "confidence");
-  return burnEnemy(s, tid, dmg);
+  s = burnEnemy(s, tid, dmg);
+  const justDied = s.combat?.enemies.find(e => e.instanceId === tid && e.stability <= 0);
+  if (justDied) {
+    for (const relicId of s.player.relics) {
+      const relic = RELIC_DEFS[relicId];
+      if (relic?.onEnemyDeath) s = relic.onEnemyDeath(s, justDied);
+    }
+  }
+  return s;
 }
 
 export function reduce(state: GameState, action: Action): GameState {

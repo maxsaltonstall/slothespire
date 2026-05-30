@@ -1,4 +1,4 @@
-import type { Card, GameState } from "../engine/state";
+import type { Card, Enemy, GameState } from "../engine/state";
 import { applyStatus, addHeadroom, drawCards, burnEnemy } from "../engine/effects";
 import { nextRng } from "../engine/rng";
 import { CARD_DEFS } from "./cards";
@@ -13,6 +13,7 @@ export interface RelicDef {
   onTurnStart?: (state: GameState) => GameState;
   onCardPlayed?: (state: GameState, card: Card) => GameState;
   onBudgetDamaged?: (state: GameState, amount: number) => GameState;
+  onEnemyDeath?: (state: GameState, enemy: Enemy) => GameState;
 }
 
 const _usedThisCombat = new Set<string>();
@@ -183,6 +184,130 @@ export const RELIC_DEFS: Record<string, RelicDef> = {
       const extraRelics = Math.max(0, s.player.relics.length - 4);
       if (extraRelics > 0) fresh = applyStatus(fresh, "player", "stability", extraRelics);
       return fresh;
+    },
+  },
+
+  // ── New variety relics ─────────────────────────────────────────
+
+  infrastructure_monitoring: {
+    id: "infrastructure_monitoring", name: "Infrastructure Monitoring",
+    product: "Datadog Infrastructure",
+    description: "At turn start, if your Headroom is 20 or more, gain +1 Energy.",
+    flavor: "When your margins are healthy, engineers move fast.",
+    onTurnStart: (s) =>
+      (s.player.headroom >= 20)
+        ? { ...s, player: { ...s.player, energy: s.player.energy + 1 } }
+        : s,
+  },
+
+  log_archive: {
+    id: "log_archive", name: "Log Archive",
+    product: "Datadog Log Management",
+    description: "At start of combat, gain Pressure 1 per curse in your deck (max 4).",
+    flavor: "Every failure documented becomes ammunition.",
+    onCombatStart: (s) => {
+      const curses = s.deck.filter(c => c.type === "curse").length;
+      const stacks = Math.min(curses, 4);
+      return stacks > 0 ? applyStatus(s, "player", "pressure", stacks) : s;
+    },
+  },
+
+  error_budget_policy: {
+    id: "error_budget_policy", name: "Error Budget Policy",
+    product: "SRE Policy",
+    description: "At start of combat, if your deck has no curses, gain Stability 2.",
+    flavor: "A clean slate earns structural advantage.",
+    onCombatStart: (s) =>
+      s.deck.every(c => c.type !== "curse")
+        ? applyStatus(s, "player", "stability", 2)
+        : s,
+  },
+
+  mobile_performance: {
+    id: "mobile_performance", name: "Mobile Performance",
+    product: "Datadog Mobile",
+    description: "At turn start, if your hand is empty, draw 3 cards.",
+    flavor: "Zero visibility is maximum emergency.",
+    onTurnStart: (s) => s.player.hand.length === 0 ? drawCards(s, 3) : s,
+  },
+
+  watchdog_insights: {
+    id: "watchdog_insights", name: "Watchdog Insights",
+    product: "Datadog Watchdog Insights",
+    description: "When you take 15+ Burn in one hit, gain Confidence 1.",
+    flavor: "The biggest incidents sharpen the sharpest engineers.",
+    onBudgetDamaged: (s, amount) =>
+      amount >= 15 ? applyStatus(s, "player", "confidence", 1) : s,
+  },
+
+  ci_visibility: {
+    id: "ci_visibility", name: "CI Visibility",
+    product: "Datadog CI Visibility",
+    description: "When an enemy dies, restore 6 Budget.",
+    flavor: "Every failing test caught is a production incident averted.",
+    onEnemyDeath: (s, _enemy) => ({
+      ...s,
+      player: { ...s.player, budget: Math.min(s.player.maxBudget, s.player.budget + 6) },
+    }),
+  },
+
+  incident_timeline: {
+    id: "incident_timeline", name: "Incident Timeline",
+    product: "Datadog Incident Management",
+    description: "When an enemy dies, apply Throttled 2 to all remaining enemies.",
+    flavor: "Resolving one incident slows everything around it.",
+    onEnemyDeath: (s, deadEnemy) => {
+      if (!s.combat) return s;
+      let fresh = s;
+      for (const e of fresh.combat!.enemies) {
+        if (e.instanceId !== deadEnemy.instanceId && e.stability > 0) {
+          fresh = applyStatus(fresh, e.instanceId, "throttled", 2);
+        }
+      }
+      return fresh;
+    },
+  },
+
+  service_map: {
+    id: "service_map", name: "Service Map",
+    product: "Datadog Service Map",
+    description: "At start of combat, gain Observability 1 and apply Throttled 1 to all enemies.",
+    flavor: "You see the whole system. They don't see you coming.",
+    onCombatStart: (s) => {
+      if (!s.combat) return s;
+      let fresh = applyStatus(s, "player", "observability", 1);
+      for (const e of fresh.combat!.enemies) {
+        fresh = applyStatus(fresh, e.instanceId, "throttled", 1);
+      }
+      return fresh;
+    },
+  },
+
+  database_monitoring: {
+    id: "database_monitoring", name: "Database Monitoring",
+    product: "Datadog Database Monitoring",
+    description: "When you play an attack card against a Customer-Facing enemy, deal 4 extra Burn.",
+    flavor: "Optimized queries hit harder.",
+    onCardPlayed: (s, card) => {
+      if (card.type !== "attack" || !s.combat) return s;
+      const target = s.combat.enemies.find(e => e.stability > 0);
+      if (!target || !(target.statuses.customer_facing ?? 0)) return s;
+      return burnEnemy(s, target.instanceId, 4);
+    },
+  },
+
+  real_time_notifications: {
+    id: "real_time_notifications", name: "Real-Time Notifications",
+    product: "Datadog Alerts",
+    description: "At turn start, remove 1 stack of On-Call Fatigue from yourself.",
+    flavor: "The right notification at the right time. Not all 47 at once.",
+    onTurnStart: (s) => {
+      const current = s.player.statuses.on_call_fatigue ?? 0;
+      if (current <= 0) return s;
+      const newStatuses = { ...s.player.statuses };
+      if (current === 1) delete newStatuses.on_call_fatigue;
+      else newStatuses.on_call_fatigue = current - 1;
+      return { ...s, player: { ...s.player, statuses: newStatuses } };
     },
   },
 };
