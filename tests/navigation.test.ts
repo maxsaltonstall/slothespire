@@ -138,20 +138,20 @@ describe("CHOOSE_REST_OPTION", () => {
 describe("EVENT_CHOICE", () => {
   it("gainCredits outcome adds credits and transitions to 'event_outcome'", () => {
     let s = newRun();
-    // untested_migration choice 0 = gainCredits 50
+    // untested_migration choice 0 = gainCredits 60
     s = { ...s, scene: "event", currentEventId: "untested_migration", credits: 0 };
     const s2 = reduce(s, { type: "EVENT_CHOICE", choiceIndex: 0 });
-    expect(s2.credits).toBe(50);
+    expect(s2.credits).toBe(60);
     expect(s2.scene).toBe("event_outcome");
-    expect(s2.eventOutcomeText).toBe("+50 credits.");
+    expect(s2.eventOutcomeText).toBe("+60 credits.");
   });
 
-  it("addCurse outcome adds Tech Debt to deck", () => {
+  it("addCurse outcome adds a curse to deck", () => {
     let s = newRun();
-    s = { ...s, scene: "event", currentEventId: "untested_migration" };
+    // mystery_microservice choice 0 = "Leave it" = addCurse
+    s = { ...s, scene: "event", currentEventId: "mystery_microservice" };
     const deckBefore = s.deck.length;
-    // choice 2 = "Let the intern run it" = addCurse
-    const s2 = reduce(s, { type: "EVENT_CHOICE", choiceIndex: 2 });
+    const s2 = reduce(s, { type: "EVENT_CHOICE", choiceIndex: 0 });
     expect(s2.deck.length).toBe(deckBefore + 1);
     expect(s2.deck[s2.deck.length - 1].type).toBe("curse");
   });

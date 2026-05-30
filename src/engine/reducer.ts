@@ -718,6 +718,13 @@ export function reduce(state: GameState, action: Action): GameState {
         } else {
           outcomeText = "Your hotfix slots are full. Nothing gained.";
         }
+      } else if (outcome.kind === "restoreBudget") {
+        s = { ...s, player: { ...s.player, budget: Math.min(s.player.maxBudget, s.player.budget + outcome.amount) } };
+        outcomeText = `Restored ${outcome.amount} SLO Budget.`;
+      } else if (outcome.kind === "gainMaxBudget") {
+        const newMax = s.player.maxBudget + outcome.amount;
+        s = { ...s, player: { ...s.player, maxBudget: newMax } };
+        outcomeText = `Maximum SLO Budget increased by ${outcome.amount}. Permanently.`;
       } else {
         // "nothing"
         outcomeText = "Nothing changes. You move on.";
