@@ -89,8 +89,10 @@ export function renderCombat(state: GameState, dispatch: (a: Action) => void): H
   }
 
   const { enemies, intentByEnemy, turn } = state.combat;
-  const firstEnemy = enemies[0];
-  const targetId = firstEnemy?.instanceId ?? null;
+  // Use selectedTargetId if set, otherwise fall back to first living enemy
+  const targetId = state.combat.selectedTargetId
+    ?? enemies.find(e => e.stability > 0)?.instanceId
+    ?? null;
   const { hand, draw, discard, exhaust, budget, maxBudget, energy, energyPerTurn, headroom } = state.player;
 
   const enemiesHtml = enemies.map(enemy => {
@@ -115,8 +117,12 @@ export function renderCombat(state: GameState, dispatch: (a: Action) => void): H
         }).join("")
       : "";
     const intentTip = intentTooltip(intent).replace(/"/g, "&quot;");
+    const isTargeted = enemy.instanceId === targetId;
     return `
-      <div class="sc-enemy" data-enemy-id="${enemy.instanceId}">
+      <div class="sc-enemy ${isTargeted && enemies.length > 1 ? "targeted" : ""}"
+           data-enemy-id="${enemy.instanceId}"
+           ${enemies.length > 1 ? 'style="cursor:pointer"' : ''}>
+        ${isTargeted && enemies.length > 1 ? '<div class="sc-target-ring">◆ TARGET</div>' : ''}
         <div class="sc-intent ${colorClass}" data-tooltip="${intentTip}">${icon} ${text}</div>
         ${futureIntentsHtml}
         <div class="sc-sprite">▲</div>
@@ -322,6 +328,19 @@ export function renderCombat(state: GameState, dispatch: (a: Action) => void): H
       .sc-footer-btn { background: transparent; border: 0; color: var(--color-accent); font-family: var(--font-display); font-size: 10px; cursor: pointer; padding: 0; }
       .sc-quit-btn { color: var(--color-text-dim); transition: color 0.15s; }
       .sc-quit-btn.confirming { color: var(--color-danger); text-shadow: var(--glow-danger); }
+      .sc-target-ring {
+        font-family: var(--font-display); font-size: 9px; letter-spacing: 1px;
+        color: var(--color-accent); text-shadow: var(--glow-accent);
+        margin-bottom: 2px;
+      }
+      .sc-enemy.targeted .sc-sprite {
+        border-color: var(--color-accent) !important;
+        box-shadow: var(--glow-accent), var(--glow-pop) !important;
+      }
+      .sc-enemy:not(.targeted)[style*="cursor:pointer"]:hover .sc-sprite {
+        border-color: var(--color-text-dim) !important;
+        opacity: 0.85;
+      }
       .sc-status-pills { display: flex; flex-wrap: wrap; gap: 2px; justify-content: center; margin-top: 2px; }
       .sc-status-pill { font-size: 8px; background: var(--color-border-low); padding: 1px 4px; border-radius: 3px; color: var(--color-text-dim); }
       .sc-status-player { color: var(--color-accent); }
@@ -425,6 +444,19 @@ export function renderCombat(state: GameState, dispatch: (a: Action) => void): H
       dispatch({ type: "USE_HOTFIX", hotfixId: btn.dataset.hotfix!, targetId })
     );
   });
+
+  // In multi-enemy fights, clicking an enemy selects it as the target
+  if (enemies.length > 1) {
+    root.querySelectorAll<HTMLDivElement>(".sc-enemy").forEach(el => {
+      el.addEventListener("click", () => {
+        const enemyId = el.dataset.enemyId!;
+        const enemy = enemies.find(en => en.instanceId === enemyId);
+        if (enemy && enemy.stability > 0) {
+          dispatch({ type: "SET_TARGET", targetId: enemyId });
+        }
+      });
+    });
+  }
 
   return root;
 }

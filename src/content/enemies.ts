@@ -119,19 +119,19 @@ export const ENEMY_DEFS: Record<string, EnemyDef> = {
   },
 };
 
-const ENEMY_POOL: Record<string, string[]> = {
+const ENEMY_POOL: Record<string, Array<string | [string, string]>> = {
   "1-0": ["flapping_health_check"],
-  "1-1": ["flapping_health_check", "phantom_read"],
-  "1-2": ["phantom_read", "cron_storm", "stale_cache"],
-  "1-3": ["memory_leak", "cron_storm", "misconfigured_tls"],
-  "1-4": ["memory_leak", "zombie_process", "misconfigured_tls"],
+  "1-1": ["flapping_health_check", "phantom_read", ["flapping_health_check", "phantom_read"]],
+  "1-2": ["phantom_read", "cron_storm", "stale_cache", ["zombie_process", "phantom_read"]],
+  "1-3": ["memory_leak", "cron_storm", "misconfigured_tls", ["memory_leak", "zombie_process"]],
+  "1-4": ["memory_leak", "zombie_process", "misconfigured_tls", ["cron_storm", "misconfigured_tls"]],
   "1-elite": ["cascading_failure"],
   "1-boss": ["the_pager_storm"],
-  "2-0": ["zombie_process", "stale_cache"],
-  "2-1": ["memory_leak", "misconfigured_tls"],
-  "2-2": ["deadlock", "memory_leak"],
-  "2-3": ["zombie_process", "deadlock"],
-  "2-4": ["memory_leak", "deadlock"],
+  "2-0": ["zombie_process", "stale_cache", ["zombie_process", "phantom_read"]],
+  "2-1": ["memory_leak", "misconfigured_tls", ["memory_leak", "phantom_read"]],
+  "2-2": ["deadlock", "memory_leak", ["deadlock", "cron_storm"]],
+  "2-3": ["zombie_process", "deadlock", ["memory_leak", "misconfigured_tls"]],
+  "2-4": ["memory_leak", "cron_storm", ["deadlock", "zombie_process"]],
   "2-elite": ["cascading_failure"],
   "2-boss": ["total_outage"],
 };
@@ -141,18 +141,28 @@ export function rowFromNodeId(nodeId: string): number {
   return match ? parseInt(match[1]) : 0;
 }
 
+export function pickEnemiesForNode(
+  nodeType: "combat" | "elite" | "boss",
+  nodeId: string,
+  act: 1 | 2,
+  rand: number
+): string[] {
+  const row = rowFromNodeId(nodeId);
+  const key = nodeType === "boss" ? `${act}-boss`
+            : nodeType === "elite" ? `${act}-elite`
+            : `${act}-${Math.min(row, 4)}`; // cap at row 4 for safety
+  const pool = ENEMY_POOL[key] ?? ["flapping_health_check"];
+  const picked = pool[Math.floor(rand * pool.length)];
+  return typeof picked === "string" ? [picked] : picked;
+}
+
 export function pickEnemyForNode(
   nodeType: "combat" | "elite" | "boss",
   nodeId: string,
   act: 1 | 2,
   rand: number
 ): string {
-  const row = rowFromNodeId(nodeId);
-  const key = nodeType === "boss" ? `${act}-boss`
-            : nodeType === "elite" ? `${act}-elite`
-            : `${act}-${Math.min(row, 4)}`; // cap at row 4 for safety
-  const pool = ENEMY_POOL[key] ?? ["flapping_health_check"];
-  return pool[Math.floor(rand * pool.length)];
+  return pickEnemiesForNode(nodeType, nodeId, act, rand)[0];
 }
 
 let _nextEnemyId = 0;

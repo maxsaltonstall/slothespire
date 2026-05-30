@@ -73,6 +73,7 @@ export interface GameState {
     enemies: Enemy[];
     intentByEnemy: Record<string, Intent>;
     activePowers: Card[];            // Power cards played this combat
+    selectedTargetId?: string;
     turn: number;
     phase: "player" | "enemy" | "transitioning";
   };

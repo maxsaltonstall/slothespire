@@ -2,7 +2,7 @@ import type { Action } from "./actions";
 import { initialState, type GameState } from "./state";
 import { buildStarterDeck, CARD_DEFS, makeCard } from "../content/cards";
 import { HOTFIX_DEFS } from "../content/hotfixes";
-import { createEnemy, getIntent, pickEnemyForNode } from "../content/enemies";
+import { createEnemy, getIntent, pickEnemyForNode, pickEnemiesForNode } from "../content/enemies";
 import { shuffleDeck, drawCards, burnEnemy, addHeadroom, applyStatus, consumeStatus, tickStatuses, burnWithModifiers, headroomWithModifiers } from "./effects";
 import type { Intent, StatusId } from "./state";
 import { buildActMap } from "./map";
@@ -65,8 +65,8 @@ function applyBurnEffect(
     if (fresh.player.statuses.confidence) fresh = consumeStatus(fresh, "player", "confidence");
     return fresh;
   }
-  // single target (default) — same logic as before
-  const tid = targetId ?? s.combat?.enemies[0]?.instanceId;
+  // single target (default) — prefer passed targetId, fall back to first living enemy
+  const tid = targetId ?? s.combat?.enemies.find(e => e.stability > 0)?.instanceId;
   if (!tid) return s;
   const enemy = s.combat?.enemies.find(e => e.instanceId === tid);
   const dmg = burnWithModifiers(amount, s.player.statuses, enemy?.statuses ?? {});
@@ -496,20 +496,25 @@ export function reduce(state: GameState, action: Action): GameState {
         case "elite": {
           const [rand, afterRand] = nextRng(s);
           s = afterRand;
-          const enemyDefId = pickEnemyForNode(
+          const enemyDefIds = pickEnemiesForNode(
             node.type === "elite" ? "elite" : "combat",
             nodeId,
             s.map.act,
             rand
           );
-          const baseEnemy = createEnemy(enemyDefId);
-          // Apply run-length scaling — enemies get tougher after the first 3 fights
+          // Apply run-length scaling to each enemy
           const extraPressure = scalingPressure(completedCombats(state), node.type === "elite");
-          const enemy = extraPressure > 0
-            ? { ...baseEnemy, statuses: { ...baseEnemy.statuses,
-                pressure: (baseEnemy.statuses.pressure ?? 0) + extraPressure } }
-            : baseEnemy;
-          const firstIntent = getIntent(enemy.defId, 0);
+          const enemies = enemyDefIds.map(defId => {
+            const base = createEnemy(defId);
+            return extraPressure > 0
+              ? { ...base, statuses: { ...base.statuses, pressure: (base.statuses.pressure ?? 0) + extraPressure } }
+              : base;
+          });
+          // Build intent map for all enemies
+          const intentByEnemy: Record<string, Intent> = {};
+          for (const enemy of enemies) {
+            intentByEnemy[enemy.instanceId] = getIntent(enemy.defId, 0);
+          }
           const [shuffledDeck, afterShuffle] = shuffleDeck(s.deck, s);
           s = afterShuffle;
           let fresh: GameState = {
@@ -530,9 +535,10 @@ export function reduce(state: GameState, action: Action): GameState {
             ...fresh,
             scene: "combat",
             combat: {
-              enemies: [enemy],
-              intentByEnemy: { [enemy.instanceId]: firstIntent },
+              enemies,
+              intentByEnemy,
               activePowers: [],
+              selectedTargetId: enemies[0]?.instanceId,
               turn: 1,
               phase: "player",
             },
@@ -578,6 +584,7 @@ export function reduce(state: GameState, action: Action): GameState {
               enemies: [boss],
               intentByEnemy: { [boss.instanceId]: firstIntent },
               activePowers: [],
+              selectedTargetId: boss.instanceId,
               turn: 1,
               phase: "player",
             },
@@ -790,6 +797,10 @@ export function reduce(state: GameState, action: Action): GameState {
         player: { ...state.player, hotfixes: [...state.player.hotfixes, action.hotfixId] },
       };
     }
+
+    case "SET_TARGET":
+      if (!state.combat) return state;
+      return { ...state, combat: { ...state.combat, selectedTargetId: action.targetId } };
 
     default:
       return state;
