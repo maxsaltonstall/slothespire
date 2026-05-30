@@ -1,10 +1,12 @@
-import type { Enemy, Intent } from "../engine/state";
+import type { Enemy, Intent, StatusId } from "../engine/state";
 
 export interface EnemyDef {
   id: string;
   name: string;
   stability: number;
   intentPattern: Intent[];
+  /** Statuses applied to this enemy when combat starts (e.g. pre-buffed bosses). */
+  startingStatuses?: Partial<Record<StatusId, number>>;
 }
 
 export const ENEMY_DEFS: Record<string, EnemyDef> = {
@@ -40,12 +42,17 @@ export const ENEMY_DEFS: Record<string, EnemyDef> = {
   the_pager_storm: {
     id: "the_pager_storm",
     name: "The Pager Storm",
-    stability: 75,
+    stability: 85,
+    // The storm has been building — arrives with momentum already
+    startingStatuses: { pressure: 1 },
     intentPattern: [
-      { kind: "burn" as const, amount: 10 },
-      { kind: "debuff" as const, status: "on_call_fatigue" as const, stacks: 1 },
-      { kind: "burn" as const, amount: 18 },
-      { kind: "buff" as const, status: "pressure" as const, stacks: 2 },
+      // All burns land at base+1 from Pressure immediately, scaling worse each cycle
+      { kind: "burn" as const, amount: 14 },           // Turn 1: 15 effective
+      { kind: "debuff" as const, status: "on_call_fatigue" as const, stacks: 2 }, // Turn 2: -4 budget/turn
+      { kind: "burn" as const, amount: 20 },           // Turn 3: 21 effective + fatigue
+      { kind: "buff" as const, status: "pressure" as const, stacks: 2 },          // Turn 4: Pressure 3
+      { kind: "burn" as const, amount: 16 },           // Turn 5: 19 effective (worse cycle)
+      { kind: "debuff" as const, status: "on_call_fatigue" as const, stacks: 2 }, // Turn 6: -8/turn total
     ],
   },
   phantom_read: {
@@ -87,12 +94,20 @@ export const ENEMY_DEFS: Record<string, EnemyDef> = {
     ],
   },
   total_outage: {
-    id: "total_outage", name: "Total Outage", stability: 100,
+    id: "total_outage", name: "Total Outage", stability: 120,
+    // Cascading from the start — the system is already degraded
+    startingStatuses: { pressure: 1 },
     intentPattern: [
-      { kind: "burn" as const, amount: 14 },
+      // Turn 1: debuffs before attacking — makes you take +50% on turn 2
       { kind: "debuff" as const, status: "customer_facing" as const, stacks: 2 },
-      { kind: "burn" as const, amount: 24 },
-      { kind: "buff" as const, status: "pressure" as const, stacks: 3 },
+      // Turn 2: 20+1 = 21, ×1.5 CF = ~32 effective — devastating opener
+      { kind: "burn" as const, amount: 20 },
+      // Turn 3: self-escalate while CF decays
+      { kind: "buff" as const, status: "pressure" as const, stacks: 2 }, // now Pressure 3
+      // Turn 4: 22+3 = 25, CF gone → cleaner but still huge
+      { kind: "burn" as const, amount: 22 },
+      // Turn 5: attrition drain to punish drawn-out fights
+      { kind: "debuff" as const, status: "on_call_fatigue" as const, stacks: 2 },
     ],
   },
   deadlock: {
@@ -151,7 +166,7 @@ export function createEnemy(defId: string): Enemy {
     name: def.name,
     stability: def.stability,
     maxStability: def.stability,
-    statuses: {},
+    statuses: { ...(def.startingStatuses ?? {}) },
   };
 }
 
