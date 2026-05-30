@@ -10,7 +10,7 @@ function outcomeTooltip(outcome: EventOutcome): string {
     case "loseCredits":    return `<b>−${outcome.amount} credits.</b>`;
     case "loseMaxBudget":  return `<b>−${outcome.amount} maximum SLO Budget.</b> Permanent.`;
     case "gainCard":       return `<b>Gain a ${outcome.rarity} card</b> for your deck.`;
-    case "addCurse":       return `<b><i>Tech Debt</i> added to your deck.</b> Costs 2 Budget/turn.`;
+    case "addCurse":       return `<b>A random curse added to your deck.</b> Could be Tech Debt, Scope Creep, Incident Backlog, or worse.`;
     case "gainHotfix":     return `<b>Gain: ${outcome.hotfixId.replace(/_/g, " ")}</b> added to your hotfix slots.`;
   }
 }

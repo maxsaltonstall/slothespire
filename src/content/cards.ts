@@ -87,6 +87,36 @@ export const CARD_DEFS: Record<string, CardDef> = {
     curseEffect: [{ kind: "selfBurn", amount: 2 }],
     flavor: "Unplayable. Costs 2 Budget every turn it sits in your hand.",
   },
+  stale_doc: {
+    id: "stale_doc", name: "Stale Doc", type: "curse", cost: -1,
+    effects: [],
+    curseEffect: [{ kind: "applyStatus", status: "burnout", stacks: 1, target: "self" }],
+    flavor: "Unplayable. Each turn in hand, draw 1 fewer card next turn.",
+  },
+  yak_shave: {
+    id: "yak_shave", name: "Yak Shave", type: "curse", cost: -1,
+    effects: [],
+    curseEffect: [{ kind: "selfBurn", amount: 1 }, { kind: "applyStatus", status: "toil", stacks: 1, target: "self" }],
+    flavor: "Unplayable. Costs 1 Budget and 1 Energy every turn it sits in your hand.",
+  },
+  scope_creep: {
+    id: "scope_creep", name: "Scope Creep", type: "curse", cost: -1,
+    effects: [],
+    curseEffect: [{ kind: "applyStatus", status: "toil", stacks: 2, target: "self" }],
+    flavor: "Unplayable. Drains 2 Energy per turn. It was supposed to be a small change.",
+  },
+  incident_backlog: {
+    id: "incident_backlog", name: "Incident Backlog", type: "curse", cost: -1,
+    effects: [],
+    curseEffect: [{ kind: "applyStatus", status: "on_call_fatigue", stacks: 1, target: "self" }],
+    flavor: "Unplayable. Adds 1 On-Call Fatigue per turn. Each unresolved incident creates more.",
+  },
+  broken_dependencies: {
+    id: "broken_dependencies", name: "Broken Dependencies", type: "curse", cost: -1,
+    effects: [],
+    curseEffect: [{ kind: "selfBurn", amount: 3 }],
+    flavor: "Unplayable. Costs 3 Budget every turn. npm install. 47 vulnerabilities. Build broken.",
+  },
   rollback: {
     id: "rollback", name: "Rollback", type: "attack", cost: 1,
     effects: [{ kind: "burn", amount: 8 }],

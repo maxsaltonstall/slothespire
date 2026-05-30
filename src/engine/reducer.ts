@@ -244,6 +244,8 @@ export function reduce(state: GameState, action: Action): GameState {
         for (const effect of def?.curseEffect ?? []) {
           if (effect.kind === "selfBurn") {
             s = { ...s, player: { ...s.player, budget: s.player.budget - effect.amount } };
+          } else if (effect.kind === "applyStatus" && effect.target === "self") {
+            s = applyStatus(s, "player", effect.status, effect.stacks);
           }
         }
       }
@@ -697,8 +699,13 @@ export function reduce(state: GameState, action: Action): GameState {
         };
         outcomeText = `Maximum SLO Budget reduced by ${outcome.amount}. You can feel it.`;
       } else if (outcome.kind === "addCurse") {
-        s = { ...s, deck: [...s.deck, makeCard("tech_debt")] };
-        outcomeText = "A Tech Debt curse was added to your deck. It will haunt you.";
+        const CURSE_POOL = ["tech_debt", "stale_doc", "yak_shave", "scope_creep", "incident_backlog", "broken_dependencies"];
+        const [rand, afterRng] = nextRng(s);
+        s = afterRng;
+        const curseId = CURSE_POOL[Math.floor(rand * CURSE_POOL.length)];
+        const curseDef = CARD_DEFS[curseId];
+        s = { ...s, deck: [...s.deck, makeCard(curseId)] };
+        outcomeText = `<b>${curseDef?.name ?? "A curse"}</b> was added to your deck. ${curseDef?.flavor ?? "It will haunt you."}`;
       } else if (outcome.kind === "gainCard") {
         const [cards, newState] = generateCardReward(s, 1, outcome.rarity);
         s = { ...newState, deck: [...newState.deck, ...cards] };
