@@ -11,6 +11,30 @@ import { EVENTS } from "../content/events";
 import { generateCardReward, COMBAT_CREDITS, ELITE_CREDITS, TREASURE_CREDITS } from "../content/rewards";
 import { RELIC_DEFS, generateRelicReward, resetCombatRelicState } from "../content/relics";
 
+/**
+ * Count combat/elite nodes the player has already completed before this navigation.
+ * Used to determine enemy scaling pressure for later fights.
+ */
+function completedCombats(prevState: GameState): number {
+  const nodeMap = new Map(prevState.map.nodes.flat().map(n => [n.id, n]));
+  return prevState.map.visitedNodeIds.filter(id => {
+    const n = nodeMap.get(id);
+    return n?.type === "combat" || n?.type === "elite";
+  }).length;
+}
+
+/**
+ * Extra Pressure stacks applied to enemies based on how many fights the player
+ * has already survived. Makes later fights meaningfully harder without changing HP.
+ * Elites get +1 on top of the base scaling.
+ */
+function scalingPressure(fightsDone: number, isElite: boolean): number {
+  let base = 0;
+  if (fightsDone >= 3) base = 1;   // fight 4+: +1 flat burn per attack
+  if (fightsDone >= 6) base = 2;   // fight 7+: +2
+  return base + (isElite ? 1 : 0);
+}
+
 /** Apply a burn effect (single or all enemies), consuming Confidence if present.
  *  burnWithModifiers already applies the Confidence multiplier, so we consume it
  *  AFTER computing damage — not before.
@@ -463,7 +487,13 @@ export function reduce(state: GameState, action: Action): GameState {
             s.map.act,
             rand
           );
-          const enemy = createEnemy(enemyDefId);
+          const baseEnemy = createEnemy(enemyDefId);
+          // Apply run-length scaling — enemies get tougher after the first 3 fights
+          const extraPressure = scalingPressure(completedCombats(state), node.type === "elite");
+          const enemy = extraPressure > 0
+            ? { ...baseEnemy, statuses: { ...baseEnemy.statuses,
+                pressure: (baseEnemy.statuses.pressure ?? 0) + extraPressure } }
+            : baseEnemy;
           const firstIntent = getIntent(enemy.defId, 0);
           const [shuffledDeck, afterShuffle] = shuffleDeck(s.deck, s);
           s = afterShuffle;
@@ -502,7 +532,13 @@ export function reduce(state: GameState, action: Action): GameState {
 
         case "boss": {
           const bossDefId = pickEnemyForNode("boss", nodeId, s.map.act, 0.5);
-          const boss = createEnemy(bossDefId);
+          const baseBoss = createEnemy(bossDefId);
+          // Bosses also scale — arriving by fight 7+ means a Pressure 3 wall
+          const bossExtraPressure = scalingPressure(completedCombats(state), false);
+          const boss = bossExtraPressure > 0
+            ? { ...baseBoss, statuses: { ...baseBoss.statuses,
+                pressure: (baseBoss.statuses.pressure ?? 0) + bossExtraPressure } }
+            : baseBoss;
           const firstIntent = getIntent(boss.defId, 0);
           const [shuffledDeck, afterShuffle] = shuffleDeck(s.deck, s);
           s = afterShuffle;
